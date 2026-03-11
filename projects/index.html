@@ -10,210 +10,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- DataTables CSS + Bootstrap 5 integration -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <style>
-        :root {
-            --grey-keuf: #6e6e70;
-            --yellow-keuf: #D7AE40FF;
-            --black-keuf: #2B2429FF;
-            --blue-1: #2563eb;
-            --blue-dark: #1d4ed8;
-            --gray-mid: #9ca3af;
-            --green: #10b981;
-            --red: #ef4444;
-            --orange: #f59e0b;
-        }
-
-        /* === KEUF utilities === */
-        .bg-grey-keuf { background-color: var(--grey-keuf) !important; }
-        .bg-yellow-keuf { background-color: var(--yellow-keuf) !important; }
-        .bg-black-keuf { background-color: var(--black-keuf) !important; }
-        .text-grey-keuf { color: var(--grey-keuf) !important; }
-        .text-yellow-keuf { color: var(--yellow-keuf) !important; }
-        .text-black-keuf { color: var(--black-keuf) !important; }
-
-        .btn-yellow-keuf {
-            background-color: var(--yellow-keuf);
-            border-color: var(--yellow-keuf);
-            color: black;
-        }
-        .btn-yellow-keuf:hover {
-            background-color: #b88f2e;
-            border-color: #b88f2e;
-            color: black;
-        }
-
-        body {
-            font-family: "DM Sans", sans-serif;
-            background: #f5f7fc;
-            margin: 0;
-            padding: 0;
-        }
-        h1, h2, h3, h4, h5, h6, .font-syne {
-            font-family: "Syne", sans-serif;
-            font-weight: 700;
-        }
-
-        /* === Sidebar === */
-        .sidebar {
-            width: 260px;
-            background: #fff;
-            min-height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-        }
-        .main-area { margin-left: 260px; }
-        .nav-item {
-            color: #9ca3af;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            transition: all 0.15s;
-            font-size: 0.875rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .nav-item.active, .nav-item:hover {
-            background: var(--grey-keuf);
-            color: white;
-        }
-        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
-        .nav-badge {
-            background: var(--red);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 600;
-            padding: 0.125rem 0.5rem;
-            border-radius: 20px;
-            margin-left: auto;
-        }
-        .user-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: var(--blue-1);
-            display: flex; align-items: center; justify-content: center;
-            font-family: "Syne", sans-serif; font-weight: 700; font-size: 0.75rem; color: white;
-        }
-        .sidebar-overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 999; }
-        .sidebar-overlay.show { display: block; }
-        @media (max-width:768px) {
-            .sidebar { transform: translateX(-100%); position: fixed; z-index: 1050; }
-            .sidebar.show { transform: translateX(0); }
-            .main-area { margin-left: 0; }
-        }
-
-        /* === Progress bar === */
-        .prog-bar { width: 100px; height: 6px; background: #e9ecf2; border-radius: 20px; overflow: hidden; }
-        .prog-fill { height: 100%; border-radius: 20px; }
-
-        /* === Stat cards === */
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 1.2rem 1.4rem;
-            border: 1px solid #eef1f7;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.05);
-            border-color: var(--yellow-keuf);
-        }
-        .stat-icon {
-            width: 48px; height: 48px;
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem;
-        }
-        .stat-icon.blue { background: #e9ecfc; color: var(--blue-1); }
-        .stat-icon.yellow { background: #fef3d7; color: var(--yellow-keuf); }
-        .stat-icon.green { background: #e2f3e4; color: var(--green); }
-        .stat-icon.red { background: #ffe2e2; color: var(--red); }
-
-        /* === Badges === */
-        .badge {
-            font-weight: 500;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            letter-spacing: 0.2px;
-        }
-        .badge.en-cours { background: #e2eafd; color: var(--blue-1); }
-        .badge.retard { background: #ffe2e2; color: var(--red); }
-        .badge.verification { background: #fff0d6; color: var(--orange); }
-        .badge.debut { background: #e9e9ef; color: var(--grey-keuf); }
-
-        /* === DataTable personnalisation (cohérence KEUF) === */
-        .dataTables_wrapper .dataTables_length select,
-        .dataTables_wrapper .dataTables_filter input {
-            border: 1px solid #dee2ed;
-            border-radius: 30px;
-            padding: 0.3rem 1rem;
-            font-size: 0.85rem;
-        }
-        .dataTables_wrapper .dataTables_length select:focus,
-        .dataTables_wrapper .dataTables_filter input:focus {
-            outline: none;
-            border-color: var(--yellow-keuf);
-            box-shadow: 0 0 0 3px rgba(215,174,64,0.15);
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            border-radius: 30px !important;
-            margin: 0 3px;
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background: var(--yellow-keuf) !important;
-            color: black !important;
-            border: 1px solid var(--yellow-keuf) !important;
-        }
-        .dataTables_info {
-            font-size: 0.85rem;
-            color: var(--grey-keuf);
-        }
-        .table thead th {
-            font-size:0.75rem; 
-            font-weight:600; 
-            text-transform:uppercase; 
-            letter-spacing:0.3px; 
-            background-color: #fafbfe;
-            border-bottom-width: 1px;
-        }
-        .btn-primary-custom {
-            background: var(--yellow-keuf);
-            border: none;
-            color: black;
-            font-weight: 600;
-            padding: 0.5rem 1.2rem;
-            border-radius: 30px;
-            transition: 0.15s;
-        }
-        .btn-primary-custom:hover {
-            background: #c29e36;
-            color: black;
-        }
-        .toast-custom {
-            position: fixed; bottom:28px; right:28px; background:#1f2937; color:white; padding:0.875rem 1.25rem;
-            border-radius:14px; font-size:0.875rem; font-weight:500; z-index:1060; display:none; align-items:center;
-            gap:12px; box-shadow:0 8px 32px rgba(0,0,0,0.25);
-        }
-        .toast-custom.show { display: flex; }
-        .toast-icon { width:22px; height:22px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; }
-    </style>
+    <!-- Unified KEUF CSS -->
+    <link rel="stylesheet" href="../asset/css/style.css">
 </head>
 <body>
     <div class="d-flex">
         <!-- Sidebar overlay + menu -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
         <aside class="sidebar p-0" id="sidebar">
-            <div class="p-4 pb-3 border-bottom">
+            <div class="p-4 pb-3 border-bottom border-white border-opacity-10">
                 <div class="d-flex align-items-center justify-content-center">
                     <img src="../asset/logo/logo.jpg" alt="" width="100" />
                 </div>
@@ -221,10 +26,10 @@
             <nav class="p-3 flex-grow-1">
                 <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
                 <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
-                <a class="nav-item active d-flex align-items-center mb-2" href="#"><i class="bi bi-building"></i><span>Projets</span></a>
+                <a class="nav-item active d-flex align-items-center mb-2" href="./projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
                 <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
-                <a class="nav-item d-flex align-items-center mb-2" href="./employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
-                <a class="nav-item d-flex align-items-center mb-2" href="./stocks/index.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <a class="nav-item d-flex align-items-center" href="../employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center" href="../stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
                 <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
                 <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
             </nav>
@@ -232,8 +37,9 @@
                 <div class="user-avatar">AD</div>
                 <div class="flex-grow-1">
                     <div class="small fw-medium">Administrateur</div>
+                    <div class="small text-secondary">Admin · KEUF</div>
                 </div>
-                <div class="text-secondary" onclick="location.href='login.html'" style="cursor: pointer" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+                <div class="text-secondary" style="cursor:pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
             </div>
         </aside>
 

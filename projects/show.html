@@ -3,337 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KEUF ENGINEERING — Détail projet (tout-en-un)</title>
+    <title>KEUF ENGINEERING — Tableau de bord · Projets (DataTable)</title>
     <!-- Bootstrap 5 + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        :root {
-            --grey-keuf: #6e6e70;
-            --yellow-keuf: #D7AE40FF;
-            --black-keuf: #2B2429FF;
-            --blue-1: #2563eb;
-            --blue-dark: #1d4ed8;
-            --gray-mid: #9ca3af;
-            --green: #10b981;
-            --red: #ef4444;
-            --orange: #f59e0b;
-        }
-        body {
-            font-family: "DM Sans", sans-serif;
-            background: #f5f7fc;
-            margin: 0;
-            padding: 0;
-        }
-        h1, h2, h3, h4, h5, h6, .font-syne {
-            font-family: "Syne", sans-serif;
-            font-weight: 700;
-        }
-        /* === Sidebar (identique aux précédents) === */
-        .sidebar {
-            width: 260px;
-            background: #fff;
-            min-height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-        }
-        .main-area { margin-left: 260px; }
-        .nav-item {
-            color: #9ca3af;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            transition: all 0.15s;
-            font-size: 0.875rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .nav-item.active, .nav-item:hover {
-            background: var(--grey-keuf);
-            color: white;
-        }
-        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
-        .nav-badge {
-            background: var(--red);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 600;
-            padding: 0.125rem 0.5rem;
-            border-radius: 20px;
-            margin-left: auto;
-        }
-        .user-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: var(--blue-1);
-            display: flex; align-items: center; justify-content: center;
-            font-family: "Syne", sans-serif; font-weight: 700; font-size: 0.75rem; color: white;
-        }
-        .sidebar-overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 999; }
-        .sidebar-overlay.show { display: block; }
-        @media (max-width:768px) {
-            .sidebar { transform: translateX(-100%); position: fixed; z-index: 1050; }
-            .sidebar.show { transform: translateX(0); }
-            .main-area { margin-left: 0; }
-        }
-
-        /* === Composants spécifiques page détail (héros, cartes, etc.) === */
-        .detail-hero {
-            background: var(--black-keuf);
-            color: white;
-            border-radius: 24px;
-            padding: 1.75rem 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-        }
-        .hero-meta {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        .hero-stat {
-            background: rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 0.5rem 1.2rem;
-            backdrop-filter: blur(2px);
-        }
-        .hero-stat-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.7;
-        }
-        .quick-btns {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin-top: 1.2rem;
-        }
-        .quick-btn {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: white;
-            padding: 0.4rem 1.1rem;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: 0.15s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-        }
-        .quick-btn:hover {
-            background: rgba(255,255,255,0.18);
-            color: white;
-        }
-        .tab-badge {
-            background: var(--yellow-keuf);
-            color: black;
-            font-size: 0.6rem;
-            font-weight: 600;
-            padding: 0.15rem 0.45rem;
-            border-radius: 30px;
-            margin-left: 0.3rem;
-        }
-        /* sections / cards */
-        .section-card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid #edf0f5;
-            overflow: hidden;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .section-card-head {
-            padding: 1rem 1.25rem;
-            background: #fafbfe;
-            border-bottom: 1px solid #edf0f5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .section-card-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            font-family: 'Syne', sans-serif;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-link-custom {
-            color: var(--blue-1);
-            font-size: 0.85rem;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .btn-link-custom:hover { text-decoration: underline; }
-
-        /* phases */
-        .phase-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            background: #f9fafc;
-            border-left: 5px solid transparent;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .phase-item:hover { background: #f1f3f8; }
-        .phase-num {
-            width: 28px; height: 28px;
-            background: white;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: var(--black-keuf);
-            border: 1px solid #dee2ed;
-        }
-        .phase-badge {
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 0.2rem 0.8rem;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        .phase-badge.termine { background: #ecfdf5; color: var(--green); }
-        .phase-badge.en-cours { background: #e2eafd; color: var(--blue-1); }
-        .phase-badge.debut { background: #e9e9ef; color: var(--grey-keuf); }
-
-        /* remarques */
-        .remarque-item {
-            border-left: 4px solid;
-            padding-left: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        /* stock table */
-        .stock-table { font-size: 0.85rem; }
-        .stock-table thead tr { background: #f9fafc; border-bottom: 1px solid #eef2f6; }
-        .stock-table th, .stock-table td { padding: 0.75rem 0.5rem; }
-        .type-badge {
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            background: #eef2f6;
-        }
-        .type-badge.entree { background: #e2f3e4; color: var(--green); }
-        .type-badge.sortie { background: #ffe2e2; color: var(--red); }
-
-        /* présences */
-        .presence-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.7rem 1rem;
-            background: #f9fafc;
-            border-radius: 14px;
-            margin-bottom: 0.5rem;
-        }
-        .p-ava {
-            width: 32px; height: 32px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.7rem; color: white;
-        }
-        .status-badge-sm {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            background: #ecfdf5;
-            color: var(--green);
-        }
-        .status-badge-sm.absent { background: #ffe2e2; color: var(--red); }
-
-        /* signalements */
-        .sig-card {
-            background: #f9fafc;
-            border-radius: 16px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid var(--red);
-        }
-
-        /* photos grid */
-        .photo-card {
-            background: #f9fafc;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid #edf0f5;
-        }
-        .photo-thumb {
-            height: 110px;
-            background: #eef2f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: #9ca3af;
-        }
-        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-        .upload-zone {
-            border: 2px dashed #d0d6e2;
-            border-radius: 20px;
-            padding: 1.5rem 0.5rem;
-            text-align: center;
-            background: #f9fafc;
-            cursor: pointer;
-        }
-        .date-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: white;
-            border-radius: 16px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #edf0f5;
-        }
-        #pres-date { border: 1px solid #dee2ed; border-radius: 30px; padding: 0.3rem 1rem; font-size:0.85rem; }
-        .stat-pill-sm { font-size:0.75rem; background:#ecfdf5; padding:0.25rem 0.9rem; border-radius:30px; color:var(--green); }
-    </style>
+    <!-- DataTables CSS + Bootstrap 5 integration -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Unified KEUF CSS -->
+    <link rel="stylesheet" href="../asset/css/style.css">
 </head>
 <body>
     <div class="d-flex">
         <!-- Sidebar (identique) -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
         <aside class="sidebar p-0" id="sidebar">
-            <div class="p-4 pb-3 border-bottom">
+            <div class="p-4 pb-3 border-bottom border-white border-opacity-10">
                 <div class="d-flex align-items-center justify-content-center">
                     <img src="../asset/logo/logo.jpg" alt="" width="100" />
                 </div>
             </div>
             <nav class="p-3 flex-grow-1">
-                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem;">Principal</div>
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
                 <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
-                <a class="nav-item active d-flex align-items-center mb-2" href="#"><i class="bi bi-building"></i><span>Projets</span></a>
-                <div class="small text-uppercase px-3 pb-2 mt-3">Opérations</div>
-                <a class="nav-item d-flex align-items-center mb-2" href="#"><i class="bi bi-people"></i><span>Employés</span></a>
-                <a class="nav-item d-flex align-items-center mb-2" href="#"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
-                <div class="small text-uppercase px-3 pb-2 mt-3">Administration</div>
+                <a class="nav-item active d-flex align-items-center mb-2" href="./projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+                <a class="nav-item d-flex align-items-center" href="../employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center" href="../stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
                 <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
             </nav>
             <div class="p-3 border-top d-flex align-items-center gap-2">
                 <div class="user-avatar">AD</div>
-                <div class="flex-grow-1"><div class="small fw-medium">Administrateur</div></div>
-                <div class="text-secondary" style="cursor: pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+                <div class="flex-grow-1">
+                    <div class="small fw-medium">Administrateur</div>
+                    <div class="small text-secondary">Admin · KEUF</div>
+                </div>
+                <div class="text-secondary" style="cursor:pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
             </div>
         </aside>
 
@@ -514,7 +220,7 @@
                 <div class="section-card">
                     <div class="section-card-head">
                         <div class="section-card-title"><i class="bi bi-exclamation-triangle" style="color:var(--red);"></i>Signalements — Ce chantier</div>
-                        <!-- <a href="signalement.html" class="btn btn-grey-keuf btn-sm">Voir tous <i class="bi bi-arrow-right"></i></a> -->
+                        <a href="signalement.html" class="btn btn-grey-keuf btn-sm">AJouter <i class="bi bi-arrow-right"></i></a>
                     </div>
                     <div class="p-3" id="sig-list">
                         <div class="sig-card">

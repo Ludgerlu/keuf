@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEUF ENGINEERING — Ajouter une photo / Signalement</title>
+    <!-- Bootstrap 5 + Icons + Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Unified KEUF CSS -->
+    <link rel="stylesheet" href="../asset/css/style.css">
+    <style>
+        .upload-zone {
+            border: 2px dashed #d0d6e2;
+            border-radius: 20px;
+            padding: 1.5rem 0.5rem;
+            text-align: center;
+            background: #f9fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .upload-zone:hover {
+            border-color: var(--yellow-keuf);
+            background: #fefae6;
+        }
+        .upload-zone.has-preview {
+            border-style: solid;
+            background: white;
+        }
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--gray-mid);
+            margin-bottom: 0.5rem;
+        }
+        .gps-active {
+            background: #ecfdf5 !important;
+            color: var(--green) !important;
+            border: 1px solid var(--green) !important;
+        }
+        .photo-type-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 30px;
+            background: #eef2f6;
+            color: var(--grey-keuf);
+        }
+        .photo-type-badge.avancement { background: #e2eafd; color: var(--blue-1); }
+        .photo-type-badge.probleme { background: #ffe2e2; color: var(--red); }
+        .photo-type-badge.materiaux { background: #e2f3e4; color: var(--green); }
+        .photo-type-badge.securite { background: #fff0d6; color: var(--orange); }
+        .photo-type-badge.livraison { background: #f3e8ff; color: #7C3AED; }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar overlay + menu -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="../asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+                <a class="nav-item active d-flex align-items-center mb-2" href="../projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center mb-2" href="../stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
+                <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
+            </nav>
+            <div class="p-3 border-top d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1">
+                    <div class="small fw-medium">Administrateur</div>
+                </div>
+                <div class="text-secondary" onclick="location.href='../login.html'" style="cursor: pointer" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA -->
+        <div class="main-area flex-grow-1">
+            <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <div class="fw-bold font-syne"><i class="bi bi-camera me-2" style="color:var(--yellow-keuf);"></i>Ajouter une photo / Signalement</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date"></span>
+                    <div class="position-relative">
+                        <button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4">
+                <!-- Breadcrumb -->
+                <nav class="mb-4" style="--bs-breadcrumb-divider:'›';">
+                    <ol class="breadcrumb" style="font-size:.8125rem;">
+                        <li class="breadcrumb-item"><a href="../projects/show.html" class="text-decoration-none">Construction Siège Social</a></li>
+                        <li class="breadcrumb-item active">Ajouter une photo</li>
+                    </ol>
+                </nav>
+                <div class="container-fluid">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <h6><i class="bi bi-info-circle" style="color:var(--blue-1);"></i>Conseils</h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--green);"></i>Photo bien éclairée</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--green);"></i>Inclure un repère visuel</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--green);"></i>Max 10 Mo par photo</li>
+                            <li class="mb-2"><i class="bi bi-exclamation-circle-fill me-2" style="color:var(--orange);"></i>Description claire</li>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Main form column -->
+                    <div class="col-md-12">
+                        <div class="section-card">
+                            <div class="section-card-head">
+                                <div class="section-card-title">
+                                    <i class="bi bi-camera me-2" style="color:var(--blue-1);"></i>
+                                    Nouvelle photo / signalement
+                                </div>
+                                <span class="photo-type-badge" id="live-type-badge">Avancement</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <!-- Upload Zone -->
+                                        <div class="upload-zone mb-3 h-100" id="ph-upload-zone" onclick="document.getElementById('ph-photo-input').click()" ondragover="event.preventDefault(); this.classList.add('border-warning')" ondragleave="this.classList.remove('border-warning')" ondrop="handleDrop(event)">
+                                            <div class="h-100 d-flex flex-column align-items-center justify-content-center">
+                                                <div class="upload-icon">
+                                                    <i class="bi bi-cloud-upload" style="font-size:2rem;"></i>
+                                                </div>
+                                                <div style="font-size:.9rem;color:#374151;font-weight:500;" id="ph-upload-label">
+                                                    Cliquez ou glissez une photo ici
+                                                </div>
+                                                <div class="small text-secondary mt-1">
+                                                    Format JPG, PNG • Max 10 Mo
+                                                </div>
+                                                <div id="ph-preview" style="margin-top:1rem;display:none;">
+                                                    <img id="ph-preview-img" style="max-width:100%;border-radius:12px;object-fit:cover;border:1px solid #dee2ed;" alt="preview">
+                                                    <div class="mt-2">
+                                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="removePhoto()">
+                                                            <i class="bi bi-x-circle me-1"></i>Changer
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="file" id="ph-photo-input" accept="image/*" style="display:none;" onchange="handlePhPhoto(this)">
+
+                                    </div>
+                                    <div class="col-md-5">
+                                        <!-- Photo Type -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium" style="font-size:.85rem;">Type de photo *</label>
+                                            <select class="form-select form-select-sm " id="ph-type">
+                                                <option value="Avancement" selected>Avancement</option>
+                                                <option value="Problème">Problème</option>
+                                                <option value="Matériaux">Matériaux</option>
+                                                <option value="Sécurité">Sécurité</option>
+                                                <option value="Livraison">Livraison</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Phase & Description -->
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label fw-medium" style="font-size:.85rem;">Phase concernée</label>
+                                                <select class="form-select" id="ph-phase">
+                                                    <option value="">Toutes phases</option>
+                                                    <option value="ph1">Études & Topographie</option>
+                                                    <option value="ph2">Terrassement & Fondations</option>
+                                                    <option value="ph3">Gros Œuvre</option>
+                                                    <option value="ph4">Couverture & Charpente</option>
+                                                    <option value="ph5">Second Œuvre</option>
+                                                    <option value="ph6">Finitions & Livraison</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label fw-medium" style="font-size:.85rem;">Localisation GPS</label>
+                                                <div class="d-flex gap-2 align-items-center">
+                                                    <button class="btn btn-sm" onclick="getPhGPS()" id="gps-btn" style="background:#F3F4F6;border:none;font-size:.85rem;color:#374151;">
+                                                        <i class="bi bi-geo-alt-fill me-1"></i>Capturer
+                                                    </button>
+                                                    <span id="ph-gps-label" class="small text-secondary">
+                                                        <i class="bi bi-crosshair"></i> Non localisé
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label fw-medium" style="font-size:.85rem;">Sommaire</label>
+                                            <input type="text" class="form-control" id="ph-sommaire" placeholder="Résumez ce que montre cette photo">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium" style="font-size:.85rem;">Description</label>
+                                            <textarea class="form-control" id="ph-desc" rows="3" 
+                                                    placeholder="Décrivez ce que montre cette photo (ex: avancement mur de soutènement, sacs de ciment endommagés...)"></textarea>
+                                        </div>
+
+                                        <!-- Signalement checkbox (appears for Problème type) -->
+                                        <div class="mb-3 p-3 bg-light rounded-3" id="signalement-panel" style="display: none;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ph-is-signalement">
+                                                <label class="form-check-label fw-medium" for="ph-is-signalement">
+                                                    Marquer comme signalement
+                                                </label>
+                                            </div>
+                                            <div class="small text-secondary mt-2 ms-4">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                Un signalement sera créé pour ce problème
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+
+                                <!-- Actions -->
+                                <div class="d-flex gap-3 justify-content-end border-top pt-4 mt-3">
+                                    <a href="../projects/show.html" class="btn btn-outline-secondary px-4 py-2">Annuler</a>
+                                    <button class="btn btn-yellow-keuf px-5 py-2 fw-medium" onclick="savePh()">
+                                        <i class="bi bi-save me-2"></i>Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-custom" id="toast">
+        <div class="toast-icon"><i class="bi bi-check text-white small"></i></div>
+        <span id="toast-msg">Photo enregistrée</span>
+    </div>
+
+    <script>
+        // Mobile menu
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        function toggleSidebar() { 
+            sidebar.classList.toggle('show'); 
+            overlay.classList.toggle('show'); 
+        }
+        if(mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+        }
+
+        // Date
+        document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('fr-FR', { 
+            weekday:'long', day:'numeric', month:'long', year:'numeric' 
+        });
+
+        // GPS variables
+        let currentLat = null;
+        let currentLng = null;
+
+        // Handle photo selection
+        function handlePhPhoto(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('ph-preview');
+                    const previewImg = document.getElementById('ph-preview-img');
+                    const uploadZone = document.getElementById('ph-upload-zone');
+                    const uploadLabel = document.getElementById('ph-upload-label');
+                    
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                    uploadZone.classList.add('has-preview');
+                    uploadLabel.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Photo sélectionnée';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Handle drag & drop
+        function handleDrop(event) {
+            event.preventDefault();
+            const zone = document.getElementById('ph-upload-zone');
+            zone.classList.remove('border-warning');
+            
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const input = document.getElementById('ph-photo-input');
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                input.files = dataTransfer.files;
+                handlePhPhoto(input);
+            } else {
+                showToast('Veuillez déposer une image valide', 'error');
+            }
+        }
+
+        // Remove photo
+        function removePhoto() {
+            document.getElementById('ph-photo-input').value = '';
+            document.getElementById('ph-preview').style.display = 'none';
+            document.getElementById('ph-upload-zone').classList.remove('has-preview');
+            document.getElementById('ph-upload-label').innerHTML = 'Cliquez ou glissez une photo ici';
+        }
+
+        // Set photo type with buttons
+        function setPhotoType(type, btn) {
+            // Update hidden select
+            const select = document.getElementById('ph-type');
+            select.value = type;
+            
+            // Update badge
+            const badge = document.getElementById('live-type-badge');
+            badge.className = 'photo-type-badge ' + type.toLowerCase();
+            badge.textContent = type;
+            
+            // Show/hide signalement panel
+            const panel = document.getElementById('signalement-panel');
+            panel.style.display = type === 'Problème' ? 'block' : 'none';
+            
+            // Update button styles (optional visual feedback)
+            document.querySelectorAll('[onclick^="setPhotoType"]').forEach(b => {
+                b.style.opacity = '0.7';
+            });
+            btn.style.opacity = '1';
+        }
+
+        // GPS function
+        function getPhGPS() {
+            const gpsLabel = document.getElementById('ph-gps-label');
+            const gpsBtn = document.getElementById('gps-btn');
+            
+            if (navigator.geolocation) {
+                gpsLabel.innerHTML = '<i class="bi bi-hourglass-split"></i> Obtention de la position...';
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        currentLat = position.coords.latitude;
+                        currentLng = position.coords.longitude;
+                        
+                        gpsLabel.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> ${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}`;
+                        gpsBtn.classList.add('gps-active');
+                        showToast('Position GPS obtenue');
+                    },
+                    function(error) {
+                        gpsLabel.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i> Erreur de géolocalisation';
+                        console.error(error);
+                    }
+                );
+            } else {
+                gpsLabel.innerHTML = '<i class="bi bi-x-circle text-danger"></i> GPS non supporté';
+            }
+        }
+
+        // Save function
+        function savePh() {
+            const photoInput = document.getElementById('ph-photo-input');
+            const type = document.getElementById('ph-type').value;
+            const phase = document.getElementById('ph-phase').value;
+            const desc = document.getElementById('ph-desc').value;
+            const isSignalement = document.getElementById('ph-is-signalement')?.checked || false;
+
+            if (!photoInput.files || photoInput.files.length === 0) {
+                showToast('Veuillez sélectionner une photo', 'error');
+                return;
+            }
+
+            if (!desc) {
+                showToast('Veuillez ajouter une description', 'error');
+                return;
+            }
+
+            // Simulate save
+            const fileName = photoInput.files[0].name;
+            showToast(`${isSignalement ? 'Signalement' : 'Photo'} "${fileName}" enregistré${isSignalement ? 'e' : ''}`);
+            
+            // Reset form or redirect
+            setTimeout(() => {
+                window.location.href = '../projects/show.html';
+            }, 1500);
+        }
+
+        // Toast function
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.querySelector('.toast-icon');
+            
+            toastMsg.innerText = msg;
+            if (type === 'error') {
+                toastIcon.style.background = 'var(--red)';
+                toastIcon.innerHTML = '<i class="bi bi-exclamation text-white small"></i>';
+            } else {
+                toastIcon.style.background = 'var(--green)';
+                toastIcon.innerHTML = '<i class="bi bi-check text-white small"></i>';
+            }
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Initialize photo type
+        window.onload = function() {
+            // Set default type badge
+            const badge = document.getElementById('live-type-badge');
+            badge.className = 'photo-type-badge avancement';
+            badge.textContent = 'Avancement';
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

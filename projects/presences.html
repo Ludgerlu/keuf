@@ -3,382 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KEUF ENGINEERING — Saisie des Présences</title>
-    <!-- Bootstrap 5 minimal + icons + fonts -->
+    <title>KEUF ENGINEERING — Tableau de bord · Projets (DataTable)</title>
+    <!-- Bootstrap 5 + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        :root {
-            --grey-keuf: #6e6e70;
-            --yellow-keuf: #D7AE40FF;
-            --black-keuf: #2B2429FF;
-            --blue-1: #2563eb;
-            --green: #10b981;
-            --red: #ef4444;
-            --gray-mid: #9ca3af;
-        }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: #f5f7fc;
-            margin: 0;
-            padding: 0;
-        }
-        h1, h2, h3, h4, h5, h6, .font-syne {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-        }
-
-        /* === Sidebar identique aux autres pages === */
-        .sidebar {
-            width: 260px;
-            background: #fff;
-            min-height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-        }
-        .main-area { margin-left: 260px; }
-        .nav-item {
-            color: #9ca3af;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            transition: all 0.15s;
-            font-size: 0.875rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .nav-item.active, .nav-item:hover {
-            background: var(--grey-keuf);
-            color: white;
-        }
-        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
-        .nav-badge {
-            background: var(--red);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 600;
-            padding: 0.125rem 0.5rem;
-            border-radius: 20px;
-            margin-left: auto;
-        }
-        .user-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: var(--blue-1);
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.75rem; color: white;
-        }
-        .sidebar-overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 999; }
-        .sidebar-overlay.show { display: block; }
-        @media (max-width:768px) {
-            .sidebar { transform: translateX(-100%); position: fixed; z-index: 1050; }
-            .sidebar.show { transform: translateX(0); }
-            .main-area { margin-left: 0; }
-        }
-
-        /* === topbar (propre à presence.html) === */
-        .topbar {
-            background: white;
-            padding: 0.75rem 1.5rem;
-            border-bottom: 1px solid #eef0f5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 990;
-        }
-        .content { padding: 1.5rem; }
-
-        /* context bar */
-        .context-bar {
-            background: white;
-            border-radius: 24px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.8rem;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem 1.5rem;
-            border: 1px solid #eef2f6;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .context-bar input, .context-bar select {
-            border: 1px solid #dee2ed;
-            border-radius: 30px;
-            padding: 0.4rem 1rem;
-            font-size: 0.85rem;
-            background: white;
-        }
-        .context-divider {
-            width: 1px;
-            height: 32px;
-            background: #dee2ed;
-        }
-        .stat-pills { display: flex; gap: 0.5rem; }
-        .stat-pill {
-            font-size: 0.75rem;
-            background: #ecfdf5;
-            color: var(--green);
-            padding: 0.3rem 1rem;
-            border-radius: 30px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .stat-pill .dot { width: 8px; height: 8px; background: currentColor; border-radius: 50%; display: inline-block; }
-        .btn-save {
-            background: var(--yellow-keuf);
-            border: none;
-            border-radius: 30px;
-            padding: 0.45rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: black;
-            transition: 0.15s;
-        }
-        .btn-save:hover { background: #c29e36; }
-
-        /* dual panel */
-        .dual-panel {
-            display: grid;
-            grid-template-columns: 1fr 1.1fr;
-            gap: 1.5rem;
-            align-items: start;
-        }
-        .panel {
-            background: white;
-            border-radius: 28px;
-            border: 1px solid #eef2f6;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-        }
-        .panel-head {
-            padding: 1rem 1.5rem;
-            background: #fafbfe;
-            border-bottom: 1px solid #edf0f5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .panel-title {
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .panel-count {
-            background: #eef2f6;
-            color: var(--grey-keuf);
-            font-weight: 700;
-            font-size: 0.8rem;
-            padding: 0.2rem 0.7rem;
-            border-radius: 30px;
-        }
-
-        /* search */
-        .search-wrap {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #edf0f5;
-            display: flex;
-            align-items: center;
-            background: white;
-        }
-        .search-icon { color: var(--gray-mid); margin-right: 8px; }
-        .search-input {
-            border: none;
-            width: 100%;
-            outline: 0;
-            font-size: 0.85rem;
-            background: transparent;
-        }
-
-        /* persons list (scrollable) */
-        .persons-list {
-            max-height: 500px;
-            overflow-y: auto;
-            padding: 0.5rem 0.75rem 1rem;
-        }
-        .section-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: var(--gray-mid);
-            margin: 0.8rem 0 0.4rem 0.5rem;
-            font-weight: 600;
-        }
-        .person-card {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 16px;
-            background: #f9fafc;
-            margin-bottom: 0.4rem;
-            cursor: grab;
-            transition: 0.1s;
-            border: 1px solid transparent;
-        }
-        .person-card:hover { background: #f1f3f8; border-color: #dce2ed; }
-        .person-ava {
-            width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.7rem; color: white; flex-shrink: 0;
-        }
-        .person-ava.square { border-radius: 10px; }
-        .person-info {
-            flex-grow: 1;
-            min-width: 0;
-        }
-        .person-name {
-            font-size: 0.85rem;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .person-role {
-            font-size: 0.65rem;
-            color: var(--gray-mid);
-        }
-        .add-btn {
-            width: 28px; height: 28px;
-            border-radius: 8px;
-            background: white;
-            border: 1px solid #d0d6e2;
-            color: var(--grey-keuf);
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.1s;
-            flex-shrink: 0;
-        }
-        .add-btn:hover { background: var(--blue-1); color: white; border-color: var(--blue-1); }
-
-        /* prestataire header */
-        .prest-header-card {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 0.75rem;
-            background: #f3f6fc;
-            border-radius: 16px;
-            margin: 0.5rem 0 0.2rem;
-        }
-        .prest-status-badge {
-            font-size: 0.6rem;
-            font-weight: 600;
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            background: #ecfdf5;
-            color: var(--green);
-            margin-left: auto;
-        }
-        .prest-status-badge.absent { background: #ffe2e2; color: var(--red); }
-        .person-card.prest-emp { margin-left: 1.2rem; background: #f9fafc; }
-
-        /* right panel present cards */
-        .present-card {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.5rem 0.5rem 0.75rem;
-            background: #f9fafc;
-            border-radius: 20px;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid var(--green);
-        }
-        .present-card.is-prest { border-left-color: var(--yellow-keuf); }
-        .status-sel {
-            font-size: 0.7rem;
-            border-radius: 30px;
-            border: 1px solid #dee2ed;
-            padding: 0.2rem 0.3rem;
-            background: white;
-            width: 105px;
-        }
-        .status-sel.present { border-left: 3px solid var(--green); }
-        .hx-input {
-            width: 50px;
-            border: 1px solid #dee2ed;
-            border-radius: 30px;
-            padding: 0.2rem 0.3rem;
-            font-size: 0.7rem;
-            text-align: center;
-        }
-        .remove-btn {
-            background: transparent;
-            border: none;
-            color: var(--gray-mid);
-            font-size: 1.2rem;
-            line-height: 1;
-            padding: 0 5px;
-        }
-        .remove-btn:hover { color: var(--red); }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--gray-mid);
-            background: #f9fafc;
-            border-radius: 24px;
-            margin: 1rem;
-        }
-        .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
-        .empty-txt { font-size: 0.8rem; }
-
-        .drop-active { outline: 2px dashed var(--yellow-keuf); background: #fefae6; }
-    </style>
+    <!-- DataTables CSS + Bootstrap 5 integration -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Unified KEUF CSS -->
+    <link rel="stylesheet" href="../asset/css/style.css">
 </head>
 <body>
 <div class="d-flex">
     <!-- Sidebar -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar p-0" id="sidebar">
-        <div class="p-4 pb-3 border-bottom">
+        <div class="p-4 pb-3 border-bottom border-white border-opacity-10">
             <div class="d-flex align-items-center justify-content-center">
-                <span class="fw-black fs-2 font-syne" style="color:var(--black-keuf);">KEUF</span>
+                <img src="../asset/logo/logo.jpg" alt="" width="100" />
             </div>
         </div>
         <nav class="p-3 flex-grow-1">
-            <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem;">Principal</div>
-            <a class="nav-item d-flex align-items-center mb-2" href="index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
-            <a class="nav-item d-flex align-items-center mb-2" href="projets.html"><i class="bi bi-building"></i><span>Projets</span></a>
-            <div class="small text-uppercase px-3 pb-2 mt-3">Opérations</div>
-            <a class="nav-item active d-flex align-items-center mb-2" href="presences.html"><i class="bi bi-person-check"></i><span>Présences</span></a>
-            <a class="nav-item d-flex align-items-center mb-2" href="stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
-            <div class="small text-uppercase px-3 pb-2 mt-3">Administration</div>
+            <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
+            <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+            <a class="nav-item active d-flex align-items-center mb-2" href="./projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
+            <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+            <a class="nav-item d-flex align-items-center" href="../employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+            <a class="nav-item d-flex align-items-center" href="../stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+            <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
             <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
         </nav>
         <div class="p-3 border-top d-flex align-items-center gap-2">
             <div class="user-avatar">AD</div>
-            <div class="flex-grow-1"><div class="small fw-medium">Administrateur</div></div>
-            <div class="text-secondary" style="cursor: pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            <div class="flex-grow-1">
+                <div class="small fw-medium">Administrateur</div>
+                <div class="small text-secondary">Admin · KEUF</div>
+            </div>
+            <div class="text-secondary" style="cursor:pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
         </div>
     </aside>
 
     <!-- MAIN AREA (presences) -->
     <div class="main-area flex-grow-1">
-        <!-- topbar -->
-        <div class="topbar">
-            <button class="btn btn-link d-lg-none p-0 text-dark me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <div class="fw-bold font-syne" style="font-size:1.0625rem;">Saisie des Présences</div>
+        <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+            <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <div class="fw-bold font-syne"><i class="bi bi-building me-2" style="color:var(--yellow-keuf);"></i>Saisie des Présences</div>
             <div class="d-flex align-items-center gap-3">
-                <span class="text-secondary" style="font-size:.8125rem;" id="topbar-date">mercredi 11 mars 2026</span>
-                <button class="btn btn-light border p-2 rounded-3"><i class="bi bi-bell" style="font-size:.875rem;"></i></button>
+                <span class="text-secondary small" id="topbar-date"></span>
+                <div class="position-relative"><button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button><span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span></div>
             </div>
-        </div>
+        </header>
 
-        <div class="content">
+        <div class="content m-3">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="d-flex align-items-center">
                     <a class="btn btn-grey-keuf text-decoration-none me-3" href="./show.html"><i class="bi bi-arrow-left me-2"></i>Retour</a>
