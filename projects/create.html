@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEUF ENGINEERING — Créer un projet</title>
+    <!-- Bootstrap 5 + Google Fonts + Icons (same as dashboard) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --grey-keuf: #6e6e70;
+            --yellow-keuf: #D7AE40FF;
+            --black-keuf: #2B2429FF;
+            --blue-1: #2563eb;
+            --blue-dark: #1d4ed8;
+            --gray-mid: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+        }
+
+        /* === KEUF utilities === */
+        .bg-grey-keuf { background-color: var(--grey-keuf) !important; }
+        .bg-yellow-keuf { background-color: var(--yellow-keuf) !important; }
+        .bg-black-keuf { background-color: var(--black-keuf) !important; }
+        .text-grey-keuf { color: var(--grey-keuf) !important; }
+        .text-yellow-keuf { color: var(--yellow-keuf) !important; }
+        .text-black-keuf { color: var(--black-keuf) !important; }
+
+        .btn-grey-keuf {
+            background-color: var(--grey-keuf);
+            border-color: var(--grey-keuf);
+            color: white;
+        }
+        .btn-grey-keuf:hover {
+            background-color: #545456;
+            border-color: #545456;
+            color: white;
+        }
+        .btn-yellow-keuf {
+            background-color: var(--yellow-keuf);
+            border-color: var(--yellow-keuf);
+            color: black;
+        }
+        .btn-yellow-keuf:hover {
+            background-color: #b88f2e;
+            border-color: #b88f2e;
+            color: black;
+        }
+        .btn-black-keuf {
+            background-color: var(--black-keuf);
+            border-color: var(--black-keuf);
+            color: white;
+        }
+        .btn-black-keuf:hover {
+            background-color: #161113;
+            border-color: #161113;
+            color: white;
+        }
+        .btn-outline-grey-keuf {
+            color: var(--grey-keuf);
+            border-color: var(--grey-keuf);
+            background-color: transparent;
+        }
+        .btn-outline-grey-keuf:hover {
+            background-color: var(--grey-keuf);
+            color: white;
+        }
+        .btn-outline-yellow-keuf {
+            color: var(--yellow-keuf);
+            border-color: var(--yellow-keuf);
+            background-color: transparent;
+        }
+        .btn-outline-yellow-keuf:hover {
+            background-color: var(--yellow-keuf);
+            color: black;
+        }
+        .btn-outline-black-keuf {
+            color: var(--black-keuf);
+            border-color: var(--black-keuf);
+            background-color: transparent;
+        }
+        .btn-outline-black-keuf:hover {
+            background-color: var(--black-keuf);
+            color: white;
+        }
+
+        body {
+            font-family: "DM Sans", sans-serif;
+            background: #f4f7fd;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2, h3, h4, h5, h6, .font-syne {
+            font-family: "Syne", sans-serif;
+        }
+
+        /* === Sidebar (identique au tableau de bord) === */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .main-area { margin-left: 260px; }
+        .nav-item {
+            color: #9ca3af;
+            padding: 0.625rem 1rem;
+            border-radius: 8px;
+            transition: all 0.18s;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-item.active, .nav-item:hover {
+            background: var(--grey-keuf);
+            color: white;
+        }
+        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
+        .nav-badge {
+            background: var(--red);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--blue-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Syne", sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: white;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .sidebar-overlay.show { display: block; }
+        @media (max-width:768px) {
+            .sidebar { transform:translateX(-100%); position:fixed; z-index:1050; }
+            .sidebar.show { transform:translateX(0); }
+            .main-area { margin-left:0; }
+        }
+
+        /* === Style pour la page de création (formulaire séparé) === */
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e9ecf2;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02);
+            padding: 2rem;
+        }
+        .phase-checkbox-group {
+            background: #f9fafc;
+            border-radius: 14px;
+            padding: 1.5rem 1.2rem;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--yellow-keuf);
+            display: inline-block;
+        }
+        .form-label.required::after {
+            content: " *";
+            color: var(--red);
+            font-weight: 600;
+        }
+        .btn-back {
+            color: var(--grey-keuf);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Overlay (mobile) + Sidebar identique à l'index -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom border-white border-opacity-10">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="../asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+                <a class="nav-item active d-flex align-items-center mb-2" href="./projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+                <a class="nav-item d-flex align-items-center" href="./employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center" href="./stocks/index.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
+                <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
+            </nav>
+            <div class="p-3 border-top d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1">
+                    <div class="small fw-medium">Administrateur</div>
+                    <div class="small text-secondary">Admin · KEUF</div>
+                </div>
+                <div class="text-secondary" style="cursor:pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA : contenu de la page de création (vue séparée) -->
+        <div class="main-area flex-grow-1">
+            <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <div class="fw-bold font-syne" style="font-size:1.125rem;">
+                    <i class="bi bi-plus-circle me-2" style="color:var(--yellow-keuf);"></i>Création d'un projet
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date"></span>
+                    <div class="position-relative">
+                        <button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Contenu principal : formulaire de création -->
+            <div class="p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="./index.html" class="btn btn-grey-keuf text-decoration-none me-3"><i class="bi bi-arrow-left me-1"></i> Retour</a>
+                    <h2 class="fw-bold font-syne mb-0" style="font-size:1.7rem;">Nouveau projet</h2>
+                </div>
+
+                <!-- Formulaire séparé (pas de modal, une vraie page) -->
+                <div class="form-card">
+                    <form id="formCreateProjet" onsubmit="event.preventDefault(); simulateCreate();">
+                        <!-- ligne 1 : nom et client -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label fw-medium required">Nom du projet</label>
+                                <input type="text" class="form-control form-control-lg" id="nom" placeholder="ex: Construction résidence Akwa" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="client" class="form-label fw-medium required">Client</label>
+                                <input type="text" class="form-control form-control-lg" id="client" placeholder="ex: M. Dupont / TOTAL Cameroun" required>
+                            </div>
+                        </div>
+
+                        <!-- ligne 2 : budget + dates -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label for="budget" class="form-label fw-medium required">Budget (FCFA)</label>
+                                <input type="number" class="form-control form-control-lg" id="budget" placeholder="50 000 000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="dateDebut" class="form-label fw-medium required">Date de début</label>
+                                <input type="date" class="form-control form-control-lg" id="dateDebut" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="dateFin" class="form-label fw-medium required">Date de fin prévue</label>
+                                <input type="date" class="form-control form-control-lg" id="dateFin" required>
+                            </div>
+                        </div>
+
+                        <!-- ligne optionnelle : responsable (pas obligatoire) -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label for="responsable" class="form-label fw-medium">Responsable de projet</label>
+                                <input type="text" class="form-control" id="responsable" placeholder="ex: Jean K.">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="reference" class="form-label fw-medium">Réf. interne</label>
+                                <input type="text" class="form-control" id="reference" placeholder="KEUF-2026-001">
+                            </div>
+                        </div>
+
+                        <!-- Section phases (checkboxes, style intégré) -->
+                        <div class="phase-checkbox-group mt-5 mb-4">
+                            <h5 class="font-syne fw-bold mb-3"><i class="bi bi-diagram-3 me-2" style="color:var(--yellow-keuf);"></i>Phases du projet</h5>
+                            <p class="text-secondary small mb-3">Sélectionnez les phases applicables (par défaut la première est suggérée)</p>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="etude" id="phase1" checked>
+                                        <label class="form-check-label fw-medium" for="phase1">Étude & conception</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="terrassement" id="phase2">
+                                        <label class="form-check-label fw-medium" for="phase2">Terrassement</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="fondation" id="phase3">
+                                        <label class="form-check-label fw-medium" for="phase3">Fondation</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="structure" id="phase4">
+                                        <label class="form-check-label fw-medium" for="phase4">Structure béton</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="electricite" id="phase5">
+                                        <label class="form-check-label fw-medium" for="phase5">Électricité</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="plomberie" id="phase6">
+                                        <label class="form-check-label fw-medium" for="phase6">Plomberie</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="finitions" id="phase7">
+                                        <label class="form-check-label fw-medium" for="phase7">Finitions</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="reception" id="phase8">
+                                        <label class="form-check-label fw-medium" for="phase8">Réception</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes / commentaire -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-medium">Notes additionnelles (optionnel)</label>
+                            <textarea class="form-control" id="notes" rows="3" placeholder="Informations complémentaires..."></textarea>
+                        </div>
+
+                        <!-- Actions du formulaire (boutons) -->
+                        <div class="d-flex gap-3 justify-content-end border-top pt-4 mt-4">
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 py-2">Annuler</a>
+                            <button type="submit" class="btn btn-yellow-keuf px-5 py-2 fw-medium"><i class="bi bi-save me-2"></i>Créer le projet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de confirmation (identique) -->
+    <div class="toast-custom" id="toast">
+        <div class="toast-icon"><i class="bi bi-check text-white small"></i></div>
+        <span id="toast-msg">Projet créé avec succès</span>
+    </div>
+
+    <!-- Scripts : Bootstrap, mobile menu, simulation de création -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mise à jour de la date dans le header
+        document.getElementById("topbar-date").textContent = new Date().toLocaleDateString("fr-FR", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric"
+        });
+
+        // Mobile menu (sidebar toggle)
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        function toggleSidebar() { 
+            sidebar.classList.toggle('show'); 
+            sidebarOverlay.classList.toggle('show'); 
+        }
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+        }
+
+        // Simulation de création (remplace l'envoi du formulaire)
+        function simulateCreate() {
+            // Petite validation basique (les champs required sont déjà gérés par le navigateur)
+            const nom = document.getElementById('nom').value.trim();
+            const client = document.getElementById('client').value.trim();
+            if (!nom || !client) return; // ne devrait pas arriver grâce à required
+
+            // Afficher un toast de confirmation
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = '✅ Projet "' + nom + '" créé (simulation)';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+
+            // Réinitialiser partiellement le formulaire (optionnel, commenté si on veut garder)
+            // document.getElementById('formCreateProjet').reset();
+
+            // Ici tu pourrais rediriger vers la liste des projets après un délai
+            // setTimeout(() => { window.location.href = './projects/index.html'; }, 1500);
+        }
+
+        // Récupérer le bouton radio / checkbox : pas nécessaire pour la simulation
+    </script>
+    <style>
+        /* style additionnel pour le toast */
+        .toast-custom {
+            position: fixed; bottom:28px; right:28px; background:#1f2937; color:white; padding:0.875rem 1.25rem;
+            border-radius:12px; font-size:0.875rem; font-weight:500; z-index:1060; display:none; align-items:center;
+            gap:10px; box-shadow:0 8px 32px rgba(0,0,0,0.25);
+        }
+        .toast-custom.show { display: flex; }
+        .toast-icon { width:22px; height:22px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; }
+        .form-check-input:checked { background-color: var(--yellow-keuf); border-color: var(--yellow-keuf); }
+        .btn-yellow-keuf { background: var(--yellow-keuf); border-color: var(--yellow-keuf); color: black; font-weight: 600; }
+        .btn-yellow-keuf:hover { background: #c29e36; }
+    </style>
+</body>
+</html>

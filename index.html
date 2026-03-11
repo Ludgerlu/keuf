@@ -1,0 +1,728 @@
+<html lang="fr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEUF ENGINEERING — Tableau de bord</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    :root {
+        --grey-keuf: #6e6e70;
+        --yellow-keuf: #D7AE40FF;
+        --black-keuf: #2B2429FF;
+        --blue-1: #2563eb;
+        --blue-dark: #1d4ed8;
+        --gray-mid: #9ca3af;
+        --green: #10b981;
+        --red: #ef4444;
+        --orange: #f59e0b;
+    }
+
+    /* === Background utilities === */
+    .bg-grey-keuf { background-color: var(--grey-keuf) !important; }
+    .bg-yellow-keuf { background-color: var(--yellow-keuf) !important; }
+    .bg-black-keuf { background-color: var(--black-keuf) !important; }
+
+    /* === Text utilities === */
+    .text-grey-keuf { color: var(--grey-keuf) !important; }
+    .text-yellow-keuf { color: var(--yellow-keuf) !important; }
+    .text-black-keuf { color: var(--black-keuf) !important; }
+
+    /* === Solid buttons === */
+    .btn-grey-keuf {
+        background-color: var(--grey-keuf);
+        border-color: var(--grey-keuf);
+        color: white;
+    }
+    .btn-grey-keuf:hover {
+        background-color: #545456;        /* darkened grey-keuf (~15%) */
+        border-color: #545456;
+        color: white;
+    }
+
+    .btn-yellow-keuf {
+        background-color: var(--yellow-keuf);
+        border-color: var(--yellow-keuf);
+        color: black;                      /* keeps good contrast on yellow */
+    }
+    .btn-yellow-keuf:hover {
+        background-color: #b88f2e;        /* darkened yellow-keuf */
+        border-color: #b88f2e;
+        color: black;
+    }
+
+    .btn-black-keuf {
+        background-color: var(--black-keuf);
+        border-color: var(--black-keuf);
+        color: white;
+    }
+    .btn-black-keuf:hover {
+        background-color: #161113;        /* darkened black-keuf */
+        border-color: #161113;
+        color: white;
+    }
+
+    /* === Outline buttons === */
+    .btn-outline-grey-keuf {
+        color: var(--grey-keuf);
+        border-color: var(--grey-keuf);
+        background-color: transparent;
+    }
+    .btn-outline-grey-keuf:hover {
+        background-color: var(--grey-keuf);
+        color: white;
+    }
+
+    .btn-outline-yellow-keuf {
+        color: var(--yellow-keuf);
+        border-color: var(--yellow-keuf);
+        background-color: transparent;
+    }
+    .btn-outline-yellow-keuf:hover {
+        background-color: var(--yellow-keuf);
+        color: black;                     /* black text reads well on yellow */
+    }
+
+    .btn-outline-black-keuf {
+        color: var(--black-keuf);
+        border-color: var(--black-keuf);
+        background-color: transparent;
+    }
+    .btn-outline-black-keuf:hover {
+        background-color: var(--black-keuf);
+        color: white;
+    }
+
+    body {
+        font-family: "DM Sans", sans-serif;
+        background: #fcfcfc;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .font-syne {
+        font-family: "Syne", sans-serif;
+    }
+    .sidebar {
+        width: 260px;
+        background: #fafafa;
+        min-height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .main-area {
+        margin-left: 260px;
+    }
+    .nav-item {
+        color: #9ca3af;
+        padding: 0.625rem 1rem;
+        border-radius: 8px;
+        transition: all 0.18s;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+    .nav-item.active, .nav-item:hover {
+        background: var(--grey-keuf);
+        color: white;
+    }
+    .nav-item i {
+        font-size: 1.1rem;
+        width: 1.5rem;
+    }
+    .nav-badge {
+        background: var(--red);
+        color: white;
+        font-size: 0.625rem;
+        font-weight: 600;
+        padding: 0.125rem 0.5rem;
+        border-radius: 20px;
+        margin-left: auto;
+    }
+    .user-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--blue-1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: white;
+    }
+    .kpi-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.25rem 1.375rem;
+        border: 1px solid #e5e7eb;
+        position: relative;
+        overflow: hidden;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
+    }
+    .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+    .kpi-card.blue::before {
+        background: var(--blue-1);
+    }
+    .kpi-card.green::before {
+        background: var(--green);
+    }
+    .kpi-card.red::before {
+        background: var(--red);
+    }
+    .kpi-card.orange::before {
+        background: var(--orange);
+    }
+    .kpi-icon {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .kpi-icon.blue {
+        background: #eff6ff;
+        color: var(--blue-1);
+    }
+    .kpi-icon.green {
+        background: #ecfdf5;
+        color: var(--green);
+    }
+    .kpi-icon.red {
+        background: #fef2f2;
+        color: var(--red);
+    }
+    .kpi-icon.orange {
+        background: #fffbeb;
+        color: var(--orange);
+    }
+    .kpi-label {
+        font-size: 0.75rem;
+        color: var(--gray-mid);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    .kpi-value {
+        font-family: "Syne", sans-serif;
+        font-size: 1.875rem;
+        font-weight: 800;
+        color: #1f2937;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        display: inline-block;
+    }
+    .badge.en-cours {
+        background: #eff6ff;
+        color: var(--blue-1);
+    }
+    .badge.termine {
+        background: #ecfdf5;
+        color: var(--green);
+    }
+    .badge.retard {
+        background: #fef2f2;
+        color: var(--red);
+    }
+    .badge.verification {
+        background: #fffbeb;
+        color: var(--orange);
+    }
+    .prog-bar-custom {
+        width: 100%;
+        height: 6px;
+        background: #f3f4f6;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .prog-fill {
+        height: 100%;
+        border-radius: 10px;
+    }
+    .alert-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .alert-icon.red {
+        background: #fef2f2;
+        color: var(--red);
+    }
+    .alert-icon.orange {
+        background: #fffbeb;
+        color: var(--orange);
+    }
+    .toast-custom {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        background: #1f2937;
+        color: white;
+        padding: 0.875rem 1.25rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        z-index: 1060;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+    .toast-custom.show {
+        display: flex;
+    }
+    .toast-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    .sidebar-overlay.show { display: block; }
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            position: fixed;
+            z-index: 1050;
+            transition: transform 0.3s;
+        }
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        .main-area {
+            margin-left: 0;
+        }
+    }
+</style>
+
+</head>
+<body>
+    <div class="d-flex">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom border-white border-opacity-10">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="./asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size: 0.625rem; letter-spacing: 1.5px">
+                    Principal
+                </div>
+                <a class="nav-item active d-flex align-items-center gap-2 mb-2 text-decoration-none" href="./index.html">
+                    <i class="bi bi-house-door"></i><span>Tableau de bord</span>
+                </a>
+                <a class="nav-item d-flex align-items-center gap-2 mb-2 text-decoration-none" href="./projects/index.html">
+                    <i class="bi bi-building"></i><span>Projets</span>
+                </a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size: 0.625rem; letter-spacing: 1.5px">
+                    Opérations
+                </div>
+                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="./employees/index.html">
+                    <i class="bi bi-people"></i><span>Employés</span>
+                </a>
+                <!-- <div class="nav-item d-flex align-items-center gap-2" onclick="location.href='presences.html'"><i class="bi bi-person-check"></i><span>Présences</span></div> -->
+                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="./stocks/index.html">
+                    <i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge" id="nb-stocks">3</span>
+                </a>
+                <!-- <div class="nav-item d-flex align-items-center gap-2" onclick="location.href='signalement.html'"><i class="bi bi-exclamation-triangle"></i><span>Signalements</span><span class="nav-badge" id="nb-sigs">2</span></div> -->
+                <!-- <div class="nav-item d-flex align-items-center gap-2" onclick="location.href='photos.html'"><i class="bi bi-camera"></i><span>Photos terrain</span></div> -->
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size: 0.625rem; letter-spacing: 1.5px">
+                    Administration
+                </div>
+                <div class="nav-item d-flex align-items-center gap-2">
+                    <i class="bi bi-gear"></i><span>Paramètres</span>
+                </div>
+            </nav>
+            <div class="p-3 border-top border-white border-opacity-10 d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1">
+                    <div class="text-white small fw-medium">Administrateur</div>
+                    <div class="text-white-50 small">Admin · KEUF</div>
+                </div>
+                <div
+                    class="text-white-50"
+                    onclick="location.href='login.html'"
+                    style="cursor: pointer"
+                    title="Déconnexion"
+                >
+                    <i class="bi bi-box-arrow-right"></i>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-area flex-grow-1">
+            <header
+                class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between"
+            >
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <div class="fw-bold font-syne" style="font-size: 1.125rem">Tableau de bord</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date">mardi 10 mars 2026</span>
+                    <div class="position-relative">
+                        <button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button
+                        ><span
+                            class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+                            style="width: 8px; height: 8px"
+                        ></span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4">
+                <!-- KPIs -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="kpi-card blue">
+                            <div class="kpi-icon blue"><i class="bi bi-building"></i></div>
+                            <div class="kpi-label">Projets actifs</div>
+                            <div class="kpi-value" id="kpi-projets">4</div>
+                            <div class="kpi-sub small text-secondary" id="kpi-projets-sub">
+                                1 en cours · 1 en vérification
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card green">
+                            <div class="kpi-icon green"><i class="bi bi-people"></i></div>
+                            <div class="kpi-label">Présences aujourd'hui</div>
+                            <div class="kpi-value" id="kpi-presences">6</div>
+                            <div class="kpi-sub small text-secondary" id="kpi-presences-sub">sur 5 · 0 absents</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card red">
+                            <div class="kpi-icon red"><i class="bi bi-box"></i></div>
+                            <div class="kpi-label">Alertes stocks</div>
+                            <div class="kpi-value" id="kpi-stocks">3</div>
+                            <div class="kpi-sub small text-secondary">matériaux sous le seuil</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card orange">
+                            <div class="kpi-icon orange"><i class="bi bi-exclamation-circle"></i></div>
+                            <div class="kpi-label">Signalements pertes</div>
+                            <div class="kpi-value" id="kpi-sigs">2</div>
+                            <div class="kpi-sub small text-secondary">en attente de traitement</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Alertes -->
+                    <div class="col-md-12">
+                        <div class="card border">
+                            <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                                <h6 class="fw-bold mb-0 font-syne">Alertes &amp; Notifications</h6>
+                                <a
+                                    href="stocks.html"
+                                    class="btn btn-grey-keuf btn-sm"
+                                >
+                                    Stocks →
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex flex-column gap-2" id="alertes-list">
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon red"><i class="bi bi-box"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Stock critique — Ciment Portland</div>
+                                            <div class="small text-secondary">12 sacs · Seuil : 50</div>
+                                            <div class="small text-secondary">Stock central</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon red"><i class="bi bi-box"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Stock critique — Fer à béton 12mm</div>
+                                            <div class="small text-secondary">8 barres · Seuil : 30</div>
+                                            <div class="small text-secondary">Stock central</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon red"><i class="bi bi-box"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Stock critique — Sable de rivière</div>
+                                            <div class="small text-secondary">2 m³s · Seuil : 10</div>
+                                            <div class="small text-secondary">Stock central</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon orange"><i class="bi bi-exclamation-triangle"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Signalement — Ciment Portland</div>
+                                            <div class="small text-secondary">15 · Réhabilitation Route N°12</div>
+                                            <div class="small text-secondary">02/03/2026</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon orange"><i class="bi bi-exclamation-triangle"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Signalement — Sable de rivière</div>
+                                            <div class="small text-secondary">3 · Construction Siège Social</div>
+                                            <div class="small text-secondary">01/03/2026</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 p-2 bg-light rounded">
+                                        <div class="alert-icon orange"><i class="bi bi-shield-check"></i></div>
+                                        <div>
+                                            <div class="fw-medium small">Certification expirante</div>
+                                            <div class="small text-secondary">
+                                                ATANGA Paul — CACES R482 expire dans 5j
+                                            </div>
+                                            <div class="small text-secondary">16/03/2026</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Projets -->
+                    <div class="col-md-12">
+                        <div class="card border">
+                            <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                                <h6 class="fw-bold mb-0 font-syne">Projets en cours</h6>
+                                <a
+                                    href="./projects/index.html"
+                                    class="btn btn-grey-keuf btn-sm"
+                                >
+                                    Voir tous →
+                                </a>
+                            </div>
+                            <div class="p-3">
+                                <table class="table table-hover align-middle">
+                                    <thead class="small text-secondary bg-light">
+                                        <tr>
+                                            <th>Projet / Client</th>
+                                            <th>Statut</th>
+                                            <th>Avancement</th>
+                                            <th>Budget FCFA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="projets-tbody">
+                                        <tr onclick="location.href='detail-projet.html?id=p1'" style="cursor: pointer">
+                                            <td>
+                                                <div class="fw-medium text-dark small">Construction Siège Social</div>
+                                                <div class="small text-secondary">TOTAL Cameroun</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge en-cours"
+                                                    ><span class="badge-dot me-1"></span>En cours</span
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="prog-bar-custom">
+                                                    <div
+                                                        class="prog-fill"
+                                                        style="width: 68%; background: var(--green)"
+                                                    ></div>
+                                                </div>
+                                                <div class="small text-secondary mt-1">68%</div>
+                                            </td>
+                                            <td class="fw-semibold small">45 000 000</td>
+                                        </tr>
+                                        <tr onclick="location.href='detail-projet.html?id=p2'" style="cursor: pointer">
+                                            <td>
+                                                <div class="fw-medium text-dark small">Réhabilitation Route N°12</div>
+                                                <div class="small text-secondary">Mairie de Douala</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge retard"
+                                                    ><span class="badge-dot me-1"></span>En retard</span
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="prog-bar-custom">
+                                                    <div
+                                                        class="prog-fill"
+                                                        style="width: 34%; background: var(--red)"
+                                                    ></div>
+                                                </div>
+                                                <div class="small text-secondary mt-1">34%</div>
+                                            </td>
+                                            <td class="fw-semibold small">120 000 000</td>
+                                        </tr>
+                                        <tr onclick="location.href='detail-projet.html?id=p3'" style="cursor: pointer">
+                                            <td>
+                                                <div class="fw-medium text-dark small">Immeuble Résidentiel Bastos</div>
+                                                <div class="small text-secondary">Mme. Njoya A.</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge verification"
+                                                    ><span class="badge-dot me-1"></span>En vérification</span
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="prog-bar-custom">
+                                                    <div
+                                                        class="prog-fill"
+                                                        style="width: 91%; background: var(--blue-1)"
+                                                    ></div>
+                                                </div>
+                                                <div class="small text-secondary mt-1">91%</div>
+                                            </td>
+                                            <td class="fw-semibold small">78 500 000</td>
+                                        </tr>
+                                        <tr
+                                            onclick="location.href='detail-projet.html?id=p1773163647331'"
+                                            style="cursor: pointer"
+                                        >
+                                            <td>
+                                                <div class="fw-medium text-dark small">Bukld Finance</div>
+                                                <div class="small text-secondary">SSS</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge debut"
+                                                    ><span class="badge-dot me-1"></span>Début</span
+                                                >
+                                            </td>
+                                            <td>
+                                                <div class="prog-bar-custom">
+                                                    <div
+                                                        class="prog-fill"
+                                                        style="width: 0%; background: var(--blue-1)"
+                                                    ></div>
+                                                </div>
+                                                <div class="small text-secondary mt-1">0%</div>
+                                            </td>
+                                            <td class="fw-semibold small">120 000 000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer bg-light d-flex justify-content-around py-3">
+                                <div class="text-center">
+                                    <div
+                                        class="fw-bold font-syne"
+                                        style="color: var(--blue-1); font-size: 1.125rem"
+                                        id="ft-encours"
+                                    >
+                                        1
+                                    </div>
+                                    <div class="small text-uppercase text-secondary">En cours</div>
+                                </div>
+                                <div class="text-center">
+                                    <div
+                                        class="fw-bold font-syne"
+                                        style="color: var(--orange); font-size: 1.125rem"
+                                        id="ft-verif"
+                                    >
+                                        1
+                                    </div>
+                                    <div class="small text-uppercase text-secondary">Vérif.</div>
+                                </div>
+                                <div class="text-center">
+                                    <div
+                                        class="fw-bold font-syne"
+                                        style="color: var(--red); font-size: 1.125rem"
+                                        id="ft-retard"
+                                    >
+                                        1
+                                    </div>
+                                    <div class="small text-uppercase text-secondary">Retard</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-custom" id="toast">
+        <div class="toast-icon"><i class="bi bi-check text-white small"></i></div>
+        <span id="toast-msg">Action effectuée</span>
+    </div>
+
+    <script>
+        function fmtDate(d) {
+            return d ? new Date(d).toLocaleDateString("fr-FR") : "—";
+        }
+
+        document.getElementById("topbar-date").textContent = new Date().toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+
+        // document
+        //     .getElementById("sidebarToggle")
+        //     ?.addEventListener("click", () => document.querySelector(".sidebar").classList.toggle("show"));
+        
+    </script>
+    <script>
+        // Mobile menu
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        function toggleSidebar() { 
+            sidebar.classList.toggle('show'); 
+            sidebarOverlay.classList.toggle('show'); 
+        }
+        
+        mobileMenuBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    </script>
+</body>
+
+</html>

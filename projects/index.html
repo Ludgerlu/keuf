@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEUF ENGINEERING — Tableau de bord · Projets (DataTable)</title>
+    <!-- Bootstrap 5 + Icons + Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- DataTables CSS + Bootstrap 5 integration -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root {
+            --grey-keuf: #6e6e70;
+            --yellow-keuf: #D7AE40FF;
+            --black-keuf: #2B2429FF;
+            --blue-1: #2563eb;
+            --blue-dark: #1d4ed8;
+            --gray-mid: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+        }
+
+        /* === KEUF utilities === */
+        .bg-grey-keuf { background-color: var(--grey-keuf) !important; }
+        .bg-yellow-keuf { background-color: var(--yellow-keuf) !important; }
+        .bg-black-keuf { background-color: var(--black-keuf) !important; }
+        .text-grey-keuf { color: var(--grey-keuf) !important; }
+        .text-yellow-keuf { color: var(--yellow-keuf) !important; }
+        .text-black-keuf { color: var(--black-keuf) !important; }
+
+        .btn-yellow-keuf {
+            background-color: var(--yellow-keuf);
+            border-color: var(--yellow-keuf);
+            color: black;
+        }
+        .btn-yellow-keuf:hover {
+            background-color: #b88f2e;
+            border-color: #b88f2e;
+            color: black;
+        }
+
+        body {
+            font-family: "DM Sans", sans-serif;
+            background: #f5f7fc;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2, h3, h4, h5, h6, .font-syne {
+            font-family: "Syne", sans-serif;
+            font-weight: 700;
+        }
+
+        /* === Sidebar === */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .main-area { margin-left: 260px; }
+        .nav-item {
+            color: #9ca3af;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            transition: all 0.15s;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .nav-item.active, .nav-item:hover {
+            background: var(--grey-keuf);
+            color: white;
+        }
+        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
+        .nav-badge {
+            background: var(--red);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+        .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--blue-1);
+            display: flex; align-items: center; justify-content: center;
+            font-family: "Syne", sans-serif; font-weight: 700; font-size: 0.75rem; color: white;
+        }
+        .sidebar-overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 999; }
+        .sidebar-overlay.show { display: block; }
+        @media (max-width:768px) {
+            .sidebar { transform: translateX(-100%); position: fixed; z-index: 1050; }
+            .sidebar.show { transform: translateX(0); }
+            .main-area { margin-left: 0; }
+        }
+
+        /* === Progress bar === */
+        .prog-bar { width: 100px; height: 6px; background: #e9ecf2; border-radius: 20px; overflow: hidden; }
+        .prog-fill { height: 100%; border-radius: 20px; }
+
+        /* === Stat cards === */
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.2rem 1.4rem;
+            border: 1px solid #eef1f7;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+            border-color: var(--yellow-keuf);
+        }
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+        }
+        .stat-icon.blue { background: #e9ecfc; color: var(--blue-1); }
+        .stat-icon.yellow { background: #fef3d7; color: var(--yellow-keuf); }
+        .stat-icon.green { background: #e2f3e4; color: var(--green); }
+        .stat-icon.red { background: #ffe2e2; color: var(--red); }
+
+        /* === Badges === */
+        .badge {
+            font-weight: 500;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            letter-spacing: 0.2px;
+        }
+        .badge.en-cours { background: #e2eafd; color: var(--blue-1); }
+        .badge.retard { background: #ffe2e2; color: var(--red); }
+        .badge.verification { background: #fff0d6; color: var(--orange); }
+        .badge.debut { background: #e9e9ef; color: var(--grey-keuf); }
+
+        /* === DataTable personnalisation (cohérence KEUF) === */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #dee2ed;
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            font-size: 0.85rem;
+        }
+        .dataTables_wrapper .dataTables_length select:focus,
+        .dataTables_wrapper .dataTables_filter input:focus {
+            outline: none;
+            border-color: var(--yellow-keuf);
+            box-shadow: 0 0 0 3px rgba(215,174,64,0.15);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 30px !important;
+            margin: 0 3px;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--yellow-keuf) !important;
+            color: black !important;
+            border: 1px solid var(--yellow-keuf) !important;
+        }
+        .dataTables_info {
+            font-size: 0.85rem;
+            color: var(--grey-keuf);
+        }
+        .table thead th {
+            font-size:0.75rem; 
+            font-weight:600; 
+            text-transform:uppercase; 
+            letter-spacing:0.3px; 
+            background-color: #fafbfe;
+            border-bottom-width: 1px;
+        }
+        .btn-primary-custom {
+            background: var(--yellow-keuf);
+            border: none;
+            color: black;
+            font-weight: 600;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            transition: 0.15s;
+        }
+        .btn-primary-custom:hover {
+            background: #c29e36;
+            color: black;
+        }
+        .toast-custom {
+            position: fixed; bottom:28px; right:28px; background:#1f2937; color:white; padding:0.875rem 1.25rem;
+            border-radius:14px; font-size:0.875rem; font-weight:500; z-index:1060; display:none; align-items:center;
+            gap:12px; box-shadow:0 8px 32px rgba(0,0,0,0.25);
+        }
+        .toast-custom.show { display: flex; }
+        .toast-icon { width:22px; height:22px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar overlay + menu -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="../asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+                <a class="nav-item active d-flex align-items-center mb-2" href="#"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="./employees/index.html"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center mb-2" href="./stocks/index.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
+                <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
+            </nav>
+            <div class="p-3 border-top d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1">
+                    <div class="small fw-medium">Administrateur</div>
+                </div>
+                <div class="text-secondary" onclick="location.href='login.html'" style="cursor: pointer" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA avec DataTable -->
+        <div class="main-area flex-grow-1">
+            <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <div class="fw-bold font-syne"><i class="bi bi-kanban me-2" style="color:var(--yellow-keuf);"></i>Gestion des Projets</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date"></span>
+                    <div class="position-relative">
+                        <button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h2 class="fw-bold mb-0 font-syne d-flex align-items-center">
+                        <i class="bi bi-grid-3x3-gap-fill me-2" style="color:var(--yellow-keuf);"></i> Liste des projets
+                    </h2>
+                    <a class="btn btn-primary-custom" href="./create.html">
+                        <i class="bi bi-plus-circle me-2"></i>Nouveau projet
+                    </a>
+                </div>
+                
+                <!-- cartes KPIs -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon blue me-3"><i class="bi bi-building"></i></div>
+                            <div>
+                                <span class="text-secondary text-uppercase small fw-semibold">Projets actifs</span>
+                                <h3 class="fw-bold mb-0 font-syne">12</h3>
+                                <small class="text-success"><i class="bi bi-arrow-up"></i> +2 semaine</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon yellow me-3"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div>
+                                <span class="text-secondary text-uppercase small fw-semibold">En retard</span>
+                                <h3 class="fw-bold mb-0 font-syne">3</h3>
+                                <small class="text-danger"><i class="bi bi-clock"></i> action</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon green me-3"><i class="bi bi-check-circle"></i></div>
+                            <div>
+                                <span class="text-secondary text-uppercase small fw-semibold">Terminés</span>
+                                <h3 class="fw-bold mb-0 font-syne">8</h3>
+                                <small class="text-secondary">depuis janv.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon red me-3"><i class="bi bi-currency-exchange"></i></div>
+                            <div>
+                                <span class="text-secondary text-uppercase small fw-semibold">Budget total</span>
+                                <h3 class="fw-bold mb-0 font-syne">387M</h3>
+                                <small class="text-secondary">FCFA</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                
+
+                <!-- Carte avec DataTable intégrée -->
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-3">
+                        <table id="projetsDatatable" class="table table-hover align-middle" style="width:100%">
+                            <thead class="small text-secondary">
+                                <tr>
+                                    <th class="px-3">Projet</th>
+                                    <th>Client</th>
+                                    <th>Phases</th>
+                                    <th>Statut</th>
+                                    <th>Avancement</th>
+                                    <th>Date fin</th>
+                                    <th>Budget FCFA</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-3 fw-medium">Construction Siège Social</td>
+                                    <td class="small">TOTAL Cameroun</td>
+                                    <td class="small text-secondary">5 phase(s)</td>
+                                    <td><span class="badge en-cours"><span class="badge-dot"></span>En cours</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:68%; background:var(--blue-1);"></div></div>
+                                            <span class="small text-secondary">68%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small">30/06/2026</td>
+                                    <td class="fw-semibold small">45 000 000</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 fw-medium">Réhabilitation Route N°12</td>
+                                    <td class="small">Mairie de Douala</td>
+                                    <td class="small text-secondary">3 phase(s)</td>
+                                    <td><span class="badge retard"><span class="badge-dot"></span>En retard</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:34%; background:var(--red);"></div></div>
+                                            <span class="small text-secondary">34%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small text-danger">01/02/2026 ⚠</td>
+                                    <td class="fw-semibold small">120 000 000</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 fw-medium">Immeuble Résidentiel Bastos</td>
+                                    <td class="small">Mme. Njoya A.</td>
+                                    <td class="small text-secondary">4 phase(s)</td>
+                                    <td><span class="badge verification"><span class="badge-dot"></span>En vérification</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:91%; background:var(--orange);"></div></div>
+                                            <span class="small text-secondary">91%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small">15/03/2026</td>
+                                    <td class="fw-semibold small">78 500 000</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 fw-medium">Bukld Finance</td>
+                                    <td class="small">SSS</td>
+                                    <td class="small text-secondary">4 phase(s)</td>
+                                    <td><span class="badge debut"><span class="badge-dot"></span>Début</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:0%; background:var(--grey-keuf);"></div></div>
+                                            <span class="small text-secondary">0%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small">18/03/2026</td>
+                                    <td class="fw-semibold small">120 000 000</td>
+                                    <td><a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a></td>
+                                </tr>
+                                <!-- Ajout de deux projets factices pour voir la pagination -->
+                                <tr>
+                                    <td class="px-3 fw-medium">Extension Port de Kribi</td>
+                                    <td class="small">PAD</td>
+                                    <td class="small text-secondary">6 phase(s)</td>
+                                    <td><span class="badge en-cours">En cours</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:22%; background:var(--blue-1);"></div></div>
+                                            <span class="small text-secondary">22%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small">30/12/2026</td>
+                                    <td class="fw-semibold small">210 000 000</td>
+                                    <td><a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 fw-medium">Parc solaire Garoua</td>
+                                    <td class="small">ENEO</td>
+                                    <td class="small text-secondary">4 phase(s)</td>
+                                    <td><span class="badge verification">Étude</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="prog-bar"><div class="prog-fill" style="width:5%; background:var(--orange);"></div></div>
+                                            <span class="small text-secondary">5%</span>
+                                        </div>
+                                    </td>
+                                    <td class="small">31/08/2027</td>
+                                    <td class="fw-semibold small">340 000 000</td>
+                                    <td><a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="./show.html">Détail →</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- mini cartes infos (optionnel) -->
+                <div class="row mt-5 g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white rounded-4 border d-flex align-items-center">
+                            <div class="bg-light rounded-3 p-3 me-3"><i class="bi bi-clock-history fs-3" style="color:var(--yellow-keuf);"></i></div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Projets à venir</h6>
+                                <p class="small text-secondary mb-0">2 projets débutent dans les 7 prochains jours</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white rounded-4 border d-flex align-items-center">
+                            <div class="bg-light rounded-3 p-3 me-3"><i class="bi bi-exclamation-diamond fs-3" style="color:var(--red);"></i></div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Alertes chantier</h6>
+                                <p class="small text-secondary mb-0">3 signalements en attente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- toast -->
+    <div class="toast-custom" id="toast">
+        <div class="toast-icon"><i class="bi bi-check text-white small"></i></div>
+        <span id="toast-msg">Action effectuée</span>
+    </div>
+
+    <!-- Scripts : jQuery, Bootstrap, DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialisation de DataTable avec options françaises
+            $('#projetsDatatable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+                },
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tous"]],
+                order: [[0, 'asc']], // tri par nom de projet
+                columnDefs: [
+                    { orderable: false, targets: 7 } // désactiver tri sur la colonne action
+                ]
+            });
+
+            // date du header
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('fr-FR', options);
+        });
+
+        // Mobile menu
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        function toggleSidebar() { 
+            sidebar.classList.toggle('show'); 
+            sidebarOverlay.classList.toggle('show'); 
+        }
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+        }
+    </script>
+</body>
+</html>

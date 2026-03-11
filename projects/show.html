@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEUF ENGINEERING — Détail projet (tout-en-un)</title>
+    <!-- Bootstrap 5 + Icons + Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --grey-keuf: #6e6e70;
+            --yellow-keuf: #D7AE40FF;
+            --black-keuf: #2B2429FF;
+            --blue-1: #2563eb;
+            --blue-dark: #1d4ed8;
+            --gray-mid: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+        }
+        body {
+            font-family: "DM Sans", sans-serif;
+            background: #f5f7fc;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2, h3, h4, h5, h6, .font-syne {
+            font-family: "Syne", sans-serif;
+            font-weight: 700;
+        }
+        /* === Sidebar (identique aux précédents) === */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .main-area { margin-left: 260px; }
+        .nav-item {
+            color: #9ca3af;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            transition: all 0.15s;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .nav-item.active, .nav-item:hover {
+            background: var(--grey-keuf);
+            color: white;
+        }
+        .nav-item i { font-size: 1.1rem; width: 1.5rem; }
+        .nav-badge {
+            background: var(--red);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+        .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--blue-1);
+            display: flex; align-items: center; justify-content: center;
+            font-family: "Syne", sans-serif; font-weight: 700; font-size: 0.75rem; color: white;
+        }
+        .sidebar-overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 999; }
+        .sidebar-overlay.show { display: block; }
+        @media (max-width:768px) {
+            .sidebar { transform: translateX(-100%); position: fixed; z-index: 1050; }
+            .sidebar.show { transform: translateX(0); }
+            .main-area { margin-left: 0; }
+        }
+
+        /* === Composants spécifiques page détail (héros, cartes, etc.) === */
+        .detail-hero {
+            background: var(--black-keuf);
+            color: white;
+            border-radius: 24px;
+            padding: 1.75rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+        .hero-meta {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .hero-stat {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 0.5rem 1.2rem;
+            backdrop-filter: blur(2px);
+        }
+        .hero-stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+        }
+        .quick-btns {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 1.2rem;
+        }
+        .quick-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: white;
+            padding: 0.4rem 1.1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .quick-btn:hover {
+            background: rgba(255,255,255,0.18);
+            color: white;
+        }
+        .tab-badge {
+            background: var(--yellow-keuf);
+            color: black;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 30px;
+            margin-left: 0.3rem;
+        }
+        /* sections / cards */
+        .section-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #edf0f5;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .section-card-head {
+            padding: 1rem 1.25rem;
+            background: #fafbfe;
+            border-bottom: 1px solid #edf0f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .section-card-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: 'Syne', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-link-custom {
+            color: var(--blue-1);
+            font-size: 0.85rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .btn-link-custom:hover { text-decoration: underline; }
+
+        /* phases */
+        .phase-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: #f9fafc;
+            border-left: 5px solid transparent;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .phase-item:hover { background: #f1f3f8; }
+        .phase-num {
+            width: 28px; height: 28px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--black-keuf);
+            border: 1px solid #dee2ed;
+        }
+        .phase-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .phase-badge.termine { background: #ecfdf5; color: var(--green); }
+        .phase-badge.en-cours { background: #e2eafd; color: var(--blue-1); }
+        .phase-badge.debut { background: #e9e9ef; color: var(--grey-keuf); }
+
+        /* remarques */
+        .remarque-item {
+            border-left: 4px solid;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* stock table */
+        .stock-table { font-size: 0.85rem; }
+        .stock-table thead tr { background: #f9fafc; border-bottom: 1px solid #eef2f6; }
+        .stock-table th, .stock-table td { padding: 0.75rem 0.5rem; }
+        .type-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            background: #eef2f6;
+        }
+        .type-badge.entree { background: #e2f3e4; color: var(--green); }
+        .type-badge.sortie { background: #ffe2e2; color: var(--red); }
+
+        /* présences */
+        .presence-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.7rem 1rem;
+            background: #f9fafc;
+            border-radius: 14px;
+            margin-bottom: 0.5rem;
+        }
+        .p-ava {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.7rem; color: white;
+        }
+        .status-badge-sm {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            background: #ecfdf5;
+            color: var(--green);
+        }
+        .status-badge-sm.absent { background: #ffe2e2; color: var(--red); }
+
+        /* signalements */
+        .sig-card {
+            background: #f9fafc;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--red);
+        }
+
+        /* photos grid */
+        .photo-card {
+            background: #f9fafc;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #edf0f5;
+        }
+        .photo-thumb {
+            height: 110px;
+            background: #eef2f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #9ca3af;
+        }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .upload-zone {
+            border: 2px dashed #d0d6e2;
+            border-radius: 20px;
+            padding: 1.5rem 0.5rem;
+            text-align: center;
+            background: #f9fafc;
+            cursor: pointer;
+        }
+        .date-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #edf0f5;
+        }
+        #pres-date { border: 1px solid #dee2ed; border-radius: 30px; padding: 0.3rem 1rem; font-size:0.85rem; }
+        .stat-pill-sm { font-size:0.75rem; background:#ecfdf5; padding:0.25rem 0.9rem; border-radius:30px; color:var(--green); }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar (identique) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="../asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem;">Principal</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+                <a class="nav-item active d-flex align-items-center mb-2" href="#"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3">Opérations</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="#"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center mb-2" href="#"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3">Administration</div>
+                <div class="nav-item d-flex align-items-center"><i class="bi bi-gear"></i><span>Paramètres</span></div>
+            </nav>
+            <div class="p-3 border-top d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1"><div class="small fw-medium">Administrateur</div></div>
+                <div class="text-secondary" style="cursor: pointer;" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA : TOUT-EN-UN (plus de tabs, on affiche tout) -->
+        <div class="main-area flex-grow-1">
+            <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <div class="fw-bold font-syne"><i class="bi bi-building me-2" style="color:var(--yellow-keuf);"></i>Détail projet</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date"></span>
+                    <div class="position-relative"><button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button><span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span></div>
+                </div>
+            </header>
+
+            <div class="p-4" id="page-content">
+                <!-- BREADCRUMB -->
+                <nav class="mb-3" style="--bs-breadcrumb-divider:'›';">
+                    <ol class="breadcrumb" style="font-size:.8125rem;">
+                        <li class="breadcrumb-item"><a href="projets.html" class="text-decoration-none">Projets</a></li>
+                        <li class="breadcrumb-item active" id="bc-nom">Construction Siège Social</li>
+                    </ol>
+                </nav>
+
+                <!-- HERO -->
+                <div class="detail-hero" id="hero-section">
+                    <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap mb-3">
+                        <div>
+                            <h3 class="fw-bold mb-1 font-syne" id="hero-nom">Construction Siège Social</h3>
+                            <div class="hero-meta" id="hero-sub">Client : TOTAL Cameroun</div>
+                        </div>
+                        <span id="hero-badge" class="phase-badge" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.25);">En cours</span>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <div class="hero-stat"><div class="hero-stat-label">Budget</div><div class="fw-medium" id="h-budget">45 000 000 FCFA</div></div>
+                        <div class="hero-stat"><div class="hero-stat-label">Début</div><div class="fw-medium" id="h-debut">15/01/2025</div></div>
+                        <div class="hero-stat"><div class="hero-stat-label">Fin prévue</div><div class="fw-medium" id="h-fin">30/06/2026</div></div>
+                        <div class="hero-stat"><div class="hero-stat-label">Avancement</div><div class="fw-medium" id="h-avancement">68%</div></div>
+                    </div>
+                    <!-- quick actions (conservées mais sans onglets) -->
+                    <div class="quick-btns">
+                        <span class="quick-btn"><i class="bi bi-person-check"></i>Présences <span class="tab-badge">3</span></span>
+                        <span class="quick-btn"><i class="bi bi-box-seam"></i>Stock <span class="tab-badge">3</span></span>
+                        <span class="quick-btn"><i class="bi bi-exclamation-triangle"></i>Signalements <span class="tab-badge">2</span></span>
+                        <span class="quick-btn"><i class="bi bi-camera"></i>Photos <span class="tab-badge">3</span></span>
+                        <a href="#" class="quick-btn"><i class="bi bi-box-arrow-up-right"></i>Saisir présences</a>
+                    </div>
+                </div>
+
+                <!-- BLOC 1 : PHASES & REMARQUES (affiché en permanence) -->
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <div class="section-card-title"><i class="bi bi-list-check" style="color:var(--yellow-keuf);"></i>Phases & Remarques</div>
+                        <button class="btn btn-grey-keuf btn-sm" id="fake-add-rem"><i class="bi bi-plus-circle"></i>Ajouter remarque</button>
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-3">
+                            <!-- colonne phases -->
+                            <div class="col-md-5">
+                                <div id="phases-list">
+                                    <div class="phase-item" style="border-left-color:var(--green);">
+                                        <div class="phase-num">1</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.875rem;">Terrassement & Fondations</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">15/01/2025 → 01/03/2025</div>
+                                        </div>
+                                        <span class="phase-badge termine">Terminé</span>
+                                    </div>
+                                    <div class="phase-item" style="border-left-color:var(--green);">
+                                        <div class="phase-num">2</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.875rem;">Gros Œuvre</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">01/03/2025 → 01/11/2025</div>
+                                        </div>
+                                        <span class="phase-badge termine">Terminé</span>
+                                    </div>
+                                    <div class="phase-item" style="border-left-color:var(--blue-1);">
+                                        <div class="phase-num">3</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.875rem;">Couverture & Charpente</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">01/11/2025 → 28/02/2026</div>
+                                        </div>
+                                        <span class="phase-badge en-cours">En cours</span>
+                                    </div>
+                                    <div class="phase-item" style="border-left-color:var(--grey-keuf);">
+                                        <div class="phase-num">4</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.875rem;">Second Œuvre</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">01/03/2026 → 31/05/2026</div>
+                                        </div>
+                                        <span class="phase-badge debut">Non démarré</span>
+                                    </div>
+                                    <div class="phase-item" style="border-left-color:var(--grey-keuf);">
+                                        <div class="phase-num">5</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.875rem;">Finitions & Livraison</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">01/05/2026 → 30/06/2026</div>
+                                        </div>
+                                        <span class="phase-badge debut">Non démarré</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- colonne remarques -->
+                            <div class="col-md-7">
+                                <div id="remarques-list">
+                                    <div class="remarque-item" style="border-left-color:var(--blue-1);">
+                                        <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                                            <div class="fw-medium" style="font-size:.8125rem;">Couverture & Charpente</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">KAMGA Michel · 28/02/2026</div>
+                                        </div>
+                                        <div style="font-size:.8125rem;color:#374151;">Retard livraison acier — fournisseur annonce 3 semaines supplémentaires.</div>
+                                    </div>
+                                    <div class="remarque-item" style="border-left-color:var(--green);">
+                                        <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                                            <div class="fw-medium" style="font-size:.8125rem;">Gros Œuvre</div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;">Admin · 15/01/2026</div>
+                                        </div>
+                                        <div style="font-size:.8125rem;color:#374151;">Inspection client réussie. Le client a validé la phase gros œuvre.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOC 2 : STOCK CHANTIER -->
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <div class="section-card-title"><i class="bi bi-box-seam" style="color:var(--yellow-keuf);"></i>Mouvements de stock — Ce chantier</div>
+                        <a href="stocks.html" class="btn btn-grey-keuf btn-sm">Gérer les stocks <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="stock-table w-100">
+                            <thead><tr><th>Matériau</th><th>Type</th><th>Qté</th><th>Phase</th><th>Date</th><th>Saisi par</th></tr></thead>
+                            <tbody>
+                                <tr><td class="fw-medium">Ciment Portland</td><td><span class="type-badge entree">Entrée</span></td><td>200</td><td style="color:#6B7280;">Gros Œuvre</td><td>20/02/2026</td><td>NKEMDIRIM F.</td></tr>
+                                <tr><td class="fw-medium">Ciment Portland</td><td><span class="type-badge sortie">Sortie</span></td><td>188</td><td>Gros Œuvre</td><td>28/02/2026</td><td>NKEMDIRIM F.</td></tr>
+                                <tr><td class="fw-medium">Fer à béton 12mm</td><td><span class="type-badge entree">Entrée</span></td><td>50</td><td>Couverture</td><td>25/02/2026</td><td>NKEMDIRIM F.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BLOC 3 : PRÉSENCES (sans date picker interactif mais on affiche les infos) -->
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <div class="section-card-title"><i class="bi bi-person-lines-fill" style="color:var(--yellow-keuf);"></i>Présences du chantier</div>
+                        <!-- <span class="stat-pill-sm"><i class="bi bi-check-circle me-1"></i>3 présents aujourd'hui</span> -->
+                        <div class="ms-auto d-flex gap-2 align-items-center flex-wrap">
+                            <div id="pres-stats"><span class="stat-pill-sm green me-1"><i class="bi bi-check-circle me-1"></i>3 présents</span></div>
+                            <a id="btn-saisir-presences" href="presences.html?projetId=p1&amp;date=2026-03-11" class="btn btn-sm" style="background:var(--blue-1);color:white;font-family:'Syne',sans-serif;font-weight:600;border:none;border-radius:8px;font-size:.8rem;padding:.45rem 1rem;">
+                                <i class="bi bi-pencil-square me-1"></i>Modifier les présences
+                            </a>
+                        </div>
+                        <!-- <a href="" class="btn btn-grey-keuf btn-sm"></a> -->
+                    </div>
+                    <div class="p-3">
+                        <div id="pres-content">
+                            <div class="presence-row">
+                                <div class="p-ava" style="background:#2563EB;">KM</div>
+                                <div class="flex-grow-1"><span style="font-weight:500;">KAMGA Michel</span></div>
+                                <span class="status-badge-sm present">Présent</span>
+                            </div>
+                            <div class="presence-row">
+                                <div class="p-ava" style="background:#F59E0B;">BE</div>
+                                <div class="flex-grow-1"><span style="font-weight:500;">BIYA Emmanuel</span></div>
+                                <span class="status-badge-sm present">Présent</span>
+                            </div>
+                            <div class="presence-row">
+                                <div class="p-ava" style="background:#EF4444;">TJ</div>
+                                <div class="flex-grow-1"><span style="font-weight:500;">TCHAMBA Jean</span></div>
+                                <span class="status-badge-sm present">Présent</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOC 4 : SIGNALEMENTS -->
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <div class="section-card-title"><i class="bi bi-exclamation-triangle" style="color:var(--red);"></i>Signalements — Ce chantier</div>
+                        <!-- <a href="signalement.html" class="btn btn-grey-keuf btn-sm">Voir tous <i class="bi bi-arrow-right"></i></a> -->
+                    </div>
+                    <div class="p-3" id="sig-list">
+                        <div class="sig-card">
+                            <div class="fw-medium" style="font-size:.875rem;">Sable de rivière — 3 unité(s)</div>
+                            <div style="font-size:.8rem;color:#374151;margin:.25rem 0;">Sable emporté par les eaux de pluie.</div>
+                            <div class="d-flex gap-2" style="font-size:.7rem;color:#9CA3AF;"><span><i class="bi bi-calendar3 me-1"></i>01/03/2026</span></div>
+                        </div>
+                        <div class="sig-card">
+                            <div class="fw-medium" style="font-size:.875rem;">Ciment Portland — 12 unité(s)</div>
+                            <div style="font-size:.8rem;color:#374151;margin:.25rem 0;">Sac déchirés</div>
+                            <div class="d-flex gap-2" style="font-size:.7rem;color:#9CA3AF;"><span><i class="bi bi-calendar3 me-1"></i>11/03/2026</span><span><i class="bi bi-layers me-1"></i>Terrassement</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOC 5 : PHOTOS -->
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <div class="section-card-title"><i class="bi bi-camera" style="color:var(--blue-1);"></i>Galerie — Ce chantier</div>
+                        <!-- <a href="photos.html" class="btn btn-grey-keuf btn-sm">Voir toutes <i class="bi bi-arrow-right"></i></a> -->
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-2" id="photos-grid">
+                            <div class="col-6 col-md-3">
+                                <div class="photo-card">
+                                    <div class="photo-thumb"><span>📷</span></div>
+                                    <div class="p-2"><small style="color:var(--blue-1);">Avancement</small><div style="font-size:.75rem;">02/03/2026</div></div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="photo-card">
+                                    <div class="photo-thumb"><span>📷</span></div>
+                                    <div class="p-2"><small style="color:#7C3AED;">Livraison</small><div style="font-size:.75rem;">01/03/2026</div></div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="photo-card">
+                                    <div class="photo-thumb"><span>📷</span></div>
+                                    <div class="p-2"><small style="color:#EF4444;">Problème</small><div style="font-size:.75rem;">10/03/2026</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- /page-content -->
+        </div> <!-- /main-area -->
+    </div> <!-- /d-flex -->
+
+    <script>
+        document.getElementById("topbar-date").textContent = new Date().toLocaleDateString("fr-FR", { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        // mobile menu
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        function toggleSidebar() { sidebar.classList.toggle('show'); overlay.classList.toggle('show'); }
+        if(mobileMenuBtn) { mobileMenuBtn.addEventListener('click', toggleSidebar); overlay.addEventListener('click', toggleSidebar); }
+    </script>
+</body>
+</html>
