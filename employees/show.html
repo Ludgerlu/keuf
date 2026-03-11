@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEUF ENGINEERING — Détail employé</title>
+    <!-- Bootstrap 5 + Icons + Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Unified KEUF CSS -->
+    <link rel="stylesheet" href="../asset/css/style.css">
+    <style>
+        .emp-detail-header {
+            background: linear-gradient(135deg, var(--black-keuf) 0%, #1a1a1a 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .emp-detail-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 2rem;
+            color: white;
+            border: 4px solid var(--yellow-keuf);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            background: #f9fafc;
+            border-radius: 16px;
+            padding: 1rem;
+        }
+        
+        .info-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-mid);
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .detail-section {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #edf0f5;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .detail-section-head {
+            padding: 1rem 1.25rem;
+            background: #fafbfe;
+            border-bottom: 1px solid #edf0f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .detail-section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: 'Syne', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cert-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f9fafc;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .cert-status {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+        }
+        
+        .cert-status.valid {
+            background: #e2f3e4;
+            color: var(--green);
+        }
+        
+        .cert-status.expiring {
+            background: #fff0d6;
+            color: var(--orange);
+        }
+        
+        .cert-status.expired {
+            background: #ffe2e2;
+            color: var(--red);
+        }
+        
+        .project-assign {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #f9fafc;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge-role {
+            font-size: 0.65rem;
+            background: #eef2f6;
+            padding: 0.2rem 0.5rem;
+            border-radius: 30px;
+            color: var(--grey-keuf);
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar p-0" id="sidebar">
+            <div class="p-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="../asset/logo/logo.jpg" alt="" width="100" />
+                </div>
+            </div>
+            <nav class="p-3 flex-grow-1">
+                <div class="small text-uppercase px-3 pb-2" style="font-size:0.625rem; letter-spacing:1.5px">Principal</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="../index.html"><i class="bi bi-house-door"></i><span>Tableau de bord</span></a>
+                <a class="nav-item d-flex align-items-center mb-2" href="../projects/index.html"><i class="bi bi-building"></i><span>Projets</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Opérations</div>
+                <a class="nav-item active d-flex align-items-center mb-2" href="#"><i class="bi bi-people"></i><span>Employés</span></a>
+                <a class="nav-item d-flex align-items-center mb-2" href="../stocks.html"><i class="bi bi-box"></i><span>Stocks</span><span class="nav-badge">3</span></a>
+                <div class="small text-uppercase px-3 pb-2 mt-3" style="font-size:0.625rem; letter-spacing:1.5px">Administration</div>
+                <a class="nav-item d-flex align-items-center mb-2" href="#"><i class="bi bi-gear"></i><span>Paramètres</span></a>
+            </nav>
+            <div class="p-3 border-top d-flex align-items-center gap-2">
+                <div class="user-avatar">AD</div>
+                <div class="flex-grow-1">
+                    <div class="small fw-medium">Administrateur</div>
+                </div>
+                <div class="text-secondary" onclick="location.href='../login.html'" style="cursor: pointer" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></div>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA -->
+        <div class="main-area flex-grow-1">
+            <header class="bg-white py-3 px-4 border-bottom sticky-top d-flex align-items-center justify-content-between">
+                <button class="btn btn-link d-md-none p-0 text-dark" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <div class="fw-bold font-syne"><i class="bi bi-people me-2" style="color:var(--yellow-keuf);"></i>Détail employé</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-secondary small" id="topbar-date"></span>
+                    <div class="position-relative">
+                        <button class="btn btn-light border p-2 rounded"><i class="bi bi-bell"></i></button>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width:8px;height:8px;"></span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4">
+                <!-- Breadcrumb & Actions -->
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <nav style="--bs-breadcrumb-divider:'›';">
+                        <ol class="breadcrumb" style="font-size:.8125rem;">
+                            <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none">Employés</a></li>
+                            <li class="breadcrumb-item active" id="bc-name">KAMGA Michel</li>
+                        </ol>
+                    </nav>
+                    <div class="d-flex gap-2">
+                        <!-- <a href="edit.html?id=e1" class="btn btn-outline-primary-custom">
+                            <i class="bi bi-pencil me-2"></i>Modifier
+                        </a> -->
+                        <button class="btn btn-outline-danger" onclick="deleteEmploye()">
+                            <i class="bi bi-trash me-2"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Employee Header -->
+                <div class="emp-detail-header" id="emp-header">
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <div class="emp-detail-avatar" id="emp-avatar" style="background:#2563EB;">KM</div> 
+                        <div>
+                            <h2 class="fw-bold mb-1" id="emp-name">KAMGA Michel <span title=""><i class="bi bi-chat-text" style="color:var(--yellow-keuf);" title="Expérimenté sur les chantiers de grande envergure. Disponible pour nouveaux projets.
+                                    A participé à la construction du siège social."></i></span></h2>
+                            <div class="d-flex gap-3 align-items-center flex-wrap">
+                                <span class="badge en-cours" id="emp-role">Chef de chantier</span>
+                                <span class="statut-badge actif" id="emp-statut">Actif</span>
+                                <span class="small text-white-50"><i class="bi bi-calendar3 me-1"></i>Embauché le <span id="emp-embauche">15/01/2022</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Info Grid -->
+                <div class="info-grid mb-4">
+                    <div class="info-item">
+                        <div class="info-label">Téléphone</div>
+                        <div class="info-value" id="emp-tel">+237 699 123 456</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value" id="emp-email">m.kamga@keuf.cm</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Matricule</div>
+                        <div class="info-value" id="emp-matricule">EMP-001</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Dernière présence</div>
+                        <div class="info-value" id="emp-presence">11/03/2026</div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-12">
+
+                        <!-- Présences récentes -->
+                        <div class="detail-section">
+                            <div class="detail-section-head">
+                                <div class="detail-section-title">
+                                    <i class="bi bi-calendar-check" style="color:var(--yellow-keuf);"></i>
+                                    Présences récentes
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small">Lundi 10 mars 2026</span>
+                                    <span class="badge en-cours">Présent</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small">Vendredi 7 mars 2026</span>
+                                    <span class="badge en-cours">Présent</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small">Jeudi 6 mars 2026</span>
+                                    <span class="badge retard">Absent</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-syne fw-bold">Confirmer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Voulez-vous vraiment supprimer cet employé ?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-custom" id="toast">
+        <div class="toast-icon"><i class="bi bi-check text-white small"></i></div>
+        <span id="toast-msg">Action effectuée</span>
+    </div>
+
+    <script>
+        // Mobile menu
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        function toggleSidebar() { 
+            sidebar.classList.toggle('show'); 
+            overlay.classList.toggle('show'); 
+        }
+        
+        if(mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+        }
+
+        // Date
+        document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('fr-FR', { 
+            weekday:'long', day:'numeric', month:'long', year:'numeric' 
+        });
+
+        // Load employee data based on URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const empId = urlParams.get('id') || 'e1';
+        
+        // Simulate loading data
+        setTimeout(() => {
+            if (empId === 'e2') {
+                document.getElementById('emp-name').textContent = 'Ludger Ngapouche';
+                document.getElementById('emp-role').textContent = 'Magasinière';
+                document.getElementById('emp-avatar').textContent = 'LN';
+                document.getElementById('emp-avatar').style.background = '#0891B2';
+                document.getElementById('emp-tel').textContent = '+237 677 789 012';
+                document.getElementById('emp-email').textContent = 'l.ngapouche@keuf.cm';
+                document.getElementById('emp-matricule').textContent = 'EMP-002';
+                document.getElementById('emp-embauche').textContent = '03/04/2024';
+                document.getElementById('bc-name').textContent = 'Ludger Ngapouche';
+            }
+        }, 100);
+
+        // Actions
+        function deleteEmploye() {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function confirmDelete() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+            showToast('Employé supprimé');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        function addCertification() {
+            showToast('Fonctionnalité à venir', 'info');
+        }
+
+        function editNotes() {
+            showToast('Fonctionnalité à venir', 'info');
+        }
+
+        function assignProject() {
+            showToast('Fonctionnalité à venir', 'info');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.querySelector('.toast-icon');
+            
+            toastMsg.innerText = msg;
+            
+            if (type === 'error') {
+                toastIcon.style.background = 'var(--red)';
+                toastIcon.innerHTML = '<i class="bi bi-exclamation text-white small"></i>';
+            } else if (type === 'info') {
+                toastIcon.style.background = 'var(--blue-1)';
+                toastIcon.innerHTML = '<i class="bi bi-info text-white small"></i>';
+            } else {
+                toastIcon.style.background = 'var(--green)';
+                toastIcon.innerHTML = '<i class="bi bi-check text-white small"></i>';
+            }
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
