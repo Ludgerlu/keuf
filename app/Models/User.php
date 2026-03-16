@@ -38,12 +38,45 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    // Relations
-    public function permissions(): HasMany
+
+    // Roles constants
+    const ROLE_ADMIN = 'admin';
+    const ROLE_DIRECTEUR_TECHNIQUE = 'directeur_technique';
+    const ROLE_CONTROLEUR = 'controleur';
+    const ROLE_GESTIONNAIRE_STOCK = 'gestionnaire_stock';
+
+    public function permissions()
     {
         return $this->hasMany(Permission::class, 'utilisateur_id');
     }
 
+    public function hasPermission($module, $action, $projetId = null)
+    {
+        // Admin has all permissions
+        if ($this->role === self::ROLE_ADMIN) {
+            return true;
+        }
+
+        // Check specific permission
+        $query = $this->permissions()
+            ->where('module', $module)
+            ->where('action', $action)
+            ->where('autorise', true);
+
+        if ($projetId) {
+            $query->where(function($q) use ($projetId) {
+                $q->where('projet_id', $projetId)
+                  ->orWhereNull('projet_id');
+            });
+        } else {
+            $query->whereNull('projet_id');
+        }
+
+        return $query->exists();
+    }
+
+    
+    // Relations
     public function grantedPermissions(): HasMany
     {
         return $this->hasMany(Permission::class, 'accorde_par');
@@ -83,5 +116,9 @@ class User extends Authenticatable
     public function getFullNameAttribute(): string
     {
         return "{$this->prenom} {$this->nom}";
+    }
+    public function getInitialsAttribute()
+    {
+        return strtoupper(substr($this->prenom, 0, 1) . substr($this->nom, 0, 1));
     }
 }

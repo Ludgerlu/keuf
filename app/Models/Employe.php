@@ -19,7 +19,16 @@ class Employe extends Model
         'telephone',
         'type',
         'role_metier',
-        'actif'
+        'actif',
+        'user_id',
+        'date_naissance',
+        'date_embauche',
+        'adresse',
+        'urgence_nom',
+        'urgence_telephone',
+        'notes',
+        'avatar_couleur',
+        'avatar_initials',
     ];
 
     protected $casts = [
