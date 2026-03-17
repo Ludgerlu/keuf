@@ -21,14 +21,9 @@ class Employe extends Model
         'role_metier',
         'actif',
         'user_id',
-        'date_naissance',
+        'email',
         'date_embauche',
-        'adresse',
-        'urgence_nom',
-        'urgence_telephone',
         'notes',
-        'avatar_couleur',
-        'avatar_initials',
     ];
 
     protected $casts = [

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeController;
 
 // Public routes
 Route::get('/', function () {
@@ -18,6 +19,11 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Employee routes
+    Route::resource('employes', EmployeController::class);
+    Route::post('/employes/{employe}/assign-project', [EmployeController::class, 'assignProject'])->name('employes.assign-project');
+    Route::get('/employes/{employe}/presences', [EmployeController::class, 'getPresences'])->name('employes.presences');
     
     // Profile routes
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');

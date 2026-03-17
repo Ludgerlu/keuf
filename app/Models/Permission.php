@@ -23,7 +23,70 @@ class Permission extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+    
+    /**
+     * Get all available modules.
+     */
+    public static function getModules()
+    {
+        return [
+            'projets',
+            'employes',
+            'stocks',
+            'presences',
+            'signalements',
+            // 'facturation',
+            // 'imports'
+        ];
+    }
 
+    /**
+     * Get all available actions.
+     */
+    public static function getActions()
+    {
+        return [
+            'creer',
+            'lire',
+            'modifier',
+            'supprimer',
+            // 'exporter'
+        ];
+    }
+
+    /**
+     * Get module label in French.
+     */
+    public static function getModuleLabel($module)
+    {
+        $labels = [
+            'projets' => 'Projets',
+            'employes' => 'Employés',
+            'stocks' => 'Stocks',
+            'presences' => 'Présences',
+            'signalements' => 'Signalements',
+            'facturation' => 'Facturation',
+            'imports' => 'Imports',
+        ];
+        
+        return $labels[$module] ?? ucfirst($module);
+    }
+
+    /**
+     * Get action label in French.
+     */
+    public static function getActionLabel($action)
+    {
+        $labels = [
+            'creer' => 'Créer',
+            'lire' => 'Lire',
+            'modifier' => 'Modifier',
+            'supprimer' => 'Supprimer',
+            'exporter' => 'Exporter',
+        ];
+        
+        return $labels[$action] ?? ucfirst($action);
+    }
     // Relations
     public function utilisateur(): BelongsTo
     {

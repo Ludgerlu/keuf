@@ -42,7 +42,7 @@
                 </div>
                 
                 @if(Auth::user()->hasPermission('employes', 'view'))
-                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="#">
+                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="{{ route('employes.index') }}">
                     <i class="bi bi-people"></i><span>Employés</span>
                 </a>
                 @endif
