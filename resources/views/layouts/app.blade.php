@@ -32,7 +32,7 @@
                 </a>
                 
                 @if(Auth::user()->hasPermission('projets', 'view'))
-                <a class="nav-item d-flex align-items-center gap-2 mb-2 text-decoration-none" href="#">
+                <a class="nav-item {{ request()->routeIs('projets.*') ? 'active' : '' }} d-flex align-items-center gap-2 mb-2 text-decoration-none" href=" {{ route('projets.index') }}">
                     <i class="bi bi-building"></i><span>Projets</span>
                 </a>
                 @endif
@@ -42,7 +42,7 @@
                 </div>
                 
                 @if(Auth::user()->hasPermission('employes', 'view'))
-                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="{{ route('employes.index') }}">
+                <a class="nav-item {{ request()->routeIs('employes.*') ? 'active' : '' }} d-flex align-items-center gap-2 text-decoration-none" href="{{ route('employes.index') }}">
                     <i class="bi bi-people"></i><span>Employés</span>
                 </a>
                 @endif
@@ -57,13 +57,13 @@
                 @endif
 
                 @if(Auth::user()->hasPermission('presences', 'view'))
-                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="#">
+                <a class="nav-item {{ request()->routeIs('presences.*') ? 'active' : '' }} d-flex align-items-center gap-2 text-decoration-none" href="#">
                     <i class="bi bi-calendar-check"></i><span>Présences</span>
                 </a>
                 @endif
 
                 @if(Auth::user()->hasPermission('signalements', 'view'))
-                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="#">
+                <a class="nav-item {{ request()->routeIs('signalements.*') ? 'active' : '' }} d-flex align-items-center gap-2 text-decoration-none" href="#">
                     <i class="bi bi-exclamation-circle"></i><span>Signalements</span>
                 </a>
                 @endif
@@ -73,7 +73,7 @@
                 </div>
                 
                 @if(Auth::user()->role === 'admin')
-                <a class="nav-item d-flex align-items-center gap-2 text-decoration-none" href="#">
+                <a class="nav-item {{ request()->routeIs('parametres.*') ? 'active' : '' }} d-flex align-items-center gap-2 text-decoration-none" href="#">
                     <i class="bi bi-gear"></i><span>Paramètres</span>
                 </a>
                 @endif
@@ -134,6 +134,15 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
     <script>
         // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {

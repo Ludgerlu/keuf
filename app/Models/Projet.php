@@ -83,7 +83,7 @@ class Projet extends Model
         return $this->hasMany(StockProjet::class, 'projet_id');
     }
 
-    public function mouvementsSource(): HasMany
+    public function mouvementsStock(): HasMany
     {
         return $this->hasMany(MouvementStock::class, 'source_projet_id');
     }
