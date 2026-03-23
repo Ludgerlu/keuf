@@ -9,7 +9,7 @@ use App\Models\Permission;
 use App\Models\Projet;
 use App\Models\User;
 use App\Models\AffectationProjet;
-use App\Models\Presence;
+use App\Models\DetailPresence;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -18,26 +18,23 @@ use Illuminate\Support\Str;
 class EmployeController extends Controller
 {
     /**
-     * Display a listing of employees.
+     * Liste des employés avec filtres et stats.
      */
     public function index(Request $request)
     {
         $query = Employe::query();
 
-        // Filter by type
-        if ($request->has('type') && $request->type != 'all') {
+        if ($request->filled('type') && $request->type !== 'all') {
             $query->where('type', $request->type);
         }
 
-        // Filter by status
-        if ($request->has('statut') && $request->statut != 'all') {
+        if ($request->filled('statut') && $request->statut !== 'all') {
             $query->where('actif', $request->statut === 'actif');
         }
 
-        // Search
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
                   ->orWhere('prenom', 'like', "%{$search}%")
                   ->orWhere('role_metier', 'like', "%{$search}%")
@@ -45,67 +42,57 @@ class EmployeController extends Controller
             });
         }
 
-        $employes = $query->withCount('presences')->get();
+        // Compte les détails de présence (via detail_presences, pas presences directement)
+        $employes = $query->withCount('detailPresences')->get();
 
-        // Statistiques
         $stats = [
-            'total' => Employe::count(),
-            'actifs' => Employe::where('actif', true)->count(),
-            'internes' => Employe::where('type', 'interne')->count(),
-            'sous_traitants' => Employe::where('type', 'sous_traitant')->count(),
-            'presences_aujourdhui' => Presence::whereDate('date', today())
-                ->where('statut', 'present')
+            'total'               => Employe::count(),
+            'actifs'              => Employe::where('actif', true)->count(),
+            'internes'            => Employe::where('type', 'interne')->count(),
+            'sous_traitants'      => Employe::where('type', 'sous_traitant')->count(),
+            // Présents aujourd'hui : on cherche dans detail_presences via les sessions du jour
+            'presences_aujourdhui' => DetailPresence::where('statut', 'present')
+                ->whereHas('presence', fn($q) => $q->whereDate('date', today()))
                 ->count(),
-            'en_conge' => Employe::where('actif', false)->count(), // You might want a specific field for congé
+            'inactifs'            => Employe::where('actif', false)->count(),
         ];
 
         if ($request->ajax()) {
-            return response()->json([
-                'employes' => $employes,
-                'stats' => $stats
-            ]);
+            return response()->json(['employes' => $employes, 'stats' => $stats]);
         }
 
         return view('employes.index', compact('employes', 'stats'));
     }
 
     /**
-     * Show the form for creating a new employee.
+     * Formulaire de création.
      */
     public function create()
     {
-        $projets = Projet::where('est_stock_central', 0)->get();
-        $modules = Permission::getModules();
-        $actions = Permission::getActions();
+        $projets  = Projet::chantiers()->get();
+        $modules  = Permission::getModules();
+        $actions  = Permission::getActions();
 
         return view('employes.create', compact('projets', 'modules', 'actions'));
     }
 
     /**
-     * Store a newly created employee in storage.
+     * Enregistre un nouvel employé.
+     * Si des permissions sont fournies, crée aussi un compte utilisateur.
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nom' => 'required|string|max:100',
-            'prenom' => 'required|string|max:100',
-            'telephone' => 'nullable|string|max:30',
-            'email' => 'nullable|email|max:255|unique:employes,email',
-            'type' => 'required|in:interne,sous_traitant',
-            'role_metier' => 'nullable|string|max:100',
-            'date_naissance' => 'nullable|date',
-            'date_embauche' => 'nullable|date',
-            'adresse' => 'nullable|string',
-            'urgence_nom' => 'nullable|string|max:255',
-            'urgence_telephone' => 'nullable|string|max:30',
-            'notes' => 'nullable|string',
-            'avatar_couleur' => 'nullable|string',
-            'actif' => 'boolean',
-            'permissions' => 'nullable|array',
-            // 'permissions.*.module' => 'required|in:projets,employes,stocks,presences,signalements,facturation,imports',
-            // 'permissions.*.action' => 'required|in:creer,lire,modifier,supprimer,exporter',
-            // 'permissions.*.projet_id' => 'nullable|exists:projets,id',
-            // 'permissions.*.autorise' => 'boolean',
+            'nom'          => 'required|string|max:100',
+            'prenom'       => 'required|string|max:100',
+            'telephone'    => 'nullable|string|max:30',
+            'email'        => 'nullable|email|max:255|unique:employes,email',
+            'type'         => 'required|in:interne,sous_traitant',
+            'role_metier'  => 'nullable|string|max:100',
+            'date_embauche'=> 'nullable|date',
+            'notes'        => 'nullable|string',
+            'actif'        => 'boolean',
+            'permissions'  => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -117,182 +104,142 @@ class EmployeController extends Controller
 
         DB::beginTransaction();
         try {
-            
-            // Créer l'employé
             $employe = Employe::create([
-                'nom' => $request->nom,
-                'prenom' => $request->prenom,
-                'telephone' => $request->telephone,
-                'email' => $request->email,
-                'type' => $request->type,
-                'role_metier' => $request->role_metier,
-                // 'date_naissance' => $request->date_naissance,
-                // 'adresse' => $request->adresse,
-                // 'urgence_nom' => $request->urgence_nom,
-                // 'urgence_telephone' => $request->urgence_telephone,
-                'notes' => $request->notes,
-                'actif' => $request->has('actif') ? $request->actif : true,
+                'nom'          => $request->nom,
+                'prenom'       => $request->prenom,
+                'telephone'    => $request->telephone,
+                'email'        => $request->email,
+                'type'         => $request->type,
+                'role_metier'  => $request->role_metier,
+                'date_embauche'=> $request->date_embauche,
+                'notes'        => $request->notes,
+                'actif'        => $request->boolean('actif', true),
             ]);
 
-            // Créer les permissions si l'employé est aussi un utilisateur système
-            if ($request->has('permissions') && $request->type === 'interne') {
-                // Créer un compte utilisateur pour cet employé
+            // Si des permissions sont fournies → créer un compte utilisateur lié
+            if ($request->filled('permissions') && $request->type === 'interne') {
                 $user = User::create([
-                    'nom' => $request->nom,
-                    'prenom' => $request->prenom,
-                    'email' => $request->email ?? $this->generateEmail($request->prenom, $request->nom),
-                    'password' => bcrypt('password'), // Mot de passe par défaut
-                    'role' => $this->determineRoleFromPermissions($request->permissions),
-                    'actif' => true,
+                    'nom'      => $request->nom,
+                    'prenom'   => $request->prenom,
+                    'email'    => $request->email ?? $this->generateEmail($request->prenom, $request->nom),
+                    'password' => bcrypt('password'), // à changer à la première connexion
+                    'role'     => $this->determineRoleFromPermissions($request->permissions),
+                    'actif'    => true,
                 ]);
 
-                // dd($request->permissions);
-                // Assigner les permissions
-                if (!empty($request->permissions) && is_array($request->permissions)) {
-                    $permissions = [];
-                    $now = now();
-                    $userId = Auth::id();
-                    
-                    foreach ($request->permissions as $perm => $modules) {
-                        if (is_array($modules)) {
-                            foreach ($modules as $module => $actions) {
-                                if (is_array($actions)) {
-                                    foreach ($actions as $action => $details) {
-                                        $permissions[] = [
-                                            'utilisateur_id' => $user->id,
-                                            'module' => $perm,
-                                            'action' => $module,
-                                            'projet_id' => $details['projet_id'] ?? null,
-                                            'autorise' => $details['autorise'] ?? true,
-                                            'accorde_par' => $userId,
-                                            'created_at' => $now,
-                                            'updated_at' => $now,
-                                        ];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Insertion en lot seulement s'il y a des permissions
-                    if (!empty($permissions)) {
-                        Permission::insert($permissions);
-                    }
-                }
-
-                $employe->id = $user->id;
-                $employe->save();
+                $this->syncPermissions($user->id, $request->permissions);
             }
 
             DB::commit();
 
             $message = 'Employé créé avec succès.';
+
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                    'employe' => $employe
-                ]);
+                return response()->json(['success' => true, 'message' => $message, 'employe' => $employe]);
             }
 
-            return redirect()->route('employes.show', $employe)
-                ->with('success', $message);
+            return redirect()->route('employes.show', $employe)->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            $message = 'Erreur: ' . $e->getMessage();
+            $message = 'Erreur : ' . $e->getMessage();
+
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $message], 500);
             }
+
             return back()->with('error', $message)->withInput();
         }
     }
 
     /**
-     * Display the specified employee.
+     * Détail d'un employé avec ses présences récentes (via detail_presences)
+     * et ses projets en cours.
      */
     public function show(Employe $employe)
     {
         $employe->load([
-            'affectations' => function($q) {
-                $q->with('projet')->latest('date_debut');
-            },
-            'presences' => function($q) {
-                $q->with('projet')->latest('date')->take(30);
-            }
+            'affectations.projet',
         ]);
 
-        // Récupérer les permissions si l'employé a un compte utilisateur
-        $permissions = [];
-        if ($employe->id) {
-            $permissions = Permission::where('utilisateur_id', $employe->id)
-                ->with('projet')
-                ->get()
-                ->groupBy('module');
-        }
+        // 30 derniers détails de présence avec la session parente (date, projet)
+        $derniersDetails = $employe->detailPresences()
+            ->with(['presence.projet'])
+            ->whereHas('presence', fn($q) => $q->latest('date'))
+            ->latest('created_at')
+            ->take(30)
+            ->get();
 
-        // dd($permissions);
-        // Statistiques de présence
+        // Statistiques de présence depuis les détails
         $statsPresences = [
-            'total' => $employe->presences->count(),
-            'present' => $employe->presences->where('statut', 'present')->count(),
-            'absent' => $employe->presences->where('statut', 'absent')->count(),
-            'demi_journee' => $employe->presences->where('statut', 'demi_journee')->count(),
+            'total'        => $employe->detailPresences()->count(),
+            'present'      => $employe->detailPresences()->where('statut', 'present')->count(),
+            'absent'       => $employe->detailPresences()->where('statut', 'absent')->count(),
+            'demi_journee' => $employe->detailPresences()->where('statut', 'demi_journee')->count(),
         ];
 
-        // Projets en cours
+        // Compte utilisateur lié (même email)
+        $user = $employe->email
+            ? User::where('email', $employe->email)->first()
+            : null;
+
+        $permissions = $user
+            ? Permission::where('utilisateur_id', $user->id)->with('projet')->get()->groupBy('module')
+            : collect();
+
         $projetsEnCours = $employe->affectations()
             ->whereNull('date_fin')
             ->with('projet')
             ->get();
 
-        return view('employes.show', compact('employe', 'permissions', 'statsPresences', 'projetsEnCours'));
+        return view('employes.show', compact(
+            'employe',
+            'derniersDetails',
+            'statsPresences',
+            'permissions',
+            'projetsEnCours',
+            'user'
+        ));
     }
 
     /**
-     * Show the form for editing the specified employee.
+     * Formulaire d'édition.
      */
     public function edit(Employe $employe)
     {
-        $projets = Projet::where('est_stock_central', 0)->get();
+        $projets = Projet::chantiers()->get();
         $modules = Permission::getModules();
         $actions = Permission::getActions();
 
-        // Récupérer les permissions existantes
-        $permissions = [];
-        if ($employe->user_id) {
-            $permissions = Permission::where('utilisateur_id', $employe->user_id)
-                ->get()
-                ->keyBy(function($item) {
-                    return $item->module . '_' . $item->action . '_' . ($item->projet_id ?? 'global');
-                });
-        }
+        $user = $employe->email
+            ? User::where('email', $employe->email)->first()
+            : null;
 
-        return view('employes.edit', compact('employe', 'projets', 'modules', 'actions', 'permissions'));
+        $permissions = $user
+            ? Permission::where('utilisateur_id', $user->id)
+                ->get()
+                ->keyBy(fn($item) => $item->module . '_' . $item->action . '_' . ($item->projet_id ?? 'global'))
+            : collect();
+
+        return view('employes.edit', compact('employe', 'projets', 'modules', 'actions', 'permissions', 'user'));
     }
 
     /**
-     * Update the specified employee in storage.
+     * Met à jour un employé et ses permissions si un compte utilisateur existe.
      */
     public function update(Request $request, Employe $employe)
     {
         $validator = Validator::make($request->all(), [
-            'nom' => 'required|string|max:100',
-            'prenom' => 'required|string|max:100',
-            'telephone' => 'nullable|string|max:30',
-            'email' => 'nullable|email|max:255|unique:employes,email,' . $employe->id,
-            'type' => 'required|in:interne,sous_traitant',
-            'role_metier' => 'nullable|string|max:100',
-            'date_naissance' => 'nullable|date',
-            'date_embauche' => 'nullable|date',
-            'adresse' => 'nullable|string',
-            'urgence_nom' => 'nullable|string|max:255',
-            'urgence_telephone' => 'nullable|string|max:30',
-            'notes' => 'nullable|string',
-            'avatar_couleur' => 'nullable|string',
-            'actif' => 'boolean',
-            'permissions' => 'nullable|array',
+            'nom'          => 'required|string|max:100',
+            'prenom'       => 'required|string|max:100',
+            'telephone'    => 'nullable|string|max:30',
+            'email'        => 'nullable|email|max:255|unique:employes,email,' . $employe->id,
+            'type'         => 'required|in:interne,sous_traitant',
+            'role_metier'  => 'nullable|string|max:100',
+            'date_embauche'=> 'nullable|date',
+            'notes'        => 'nullable|string',
+            'actif'        => 'boolean',
+            'permissions'  => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -301,39 +248,27 @@ class EmployeController extends Controller
 
         DB::beginTransaction();
         try {
-            // Mettre à jour l'employé
             $employe->update([
-                'nom' => $request->nom,
-                'prenom' => $request->prenom,
-                'telephone' => $request->telephone,
-                'email' => $request->email,
-                'type' => $request->type,
-                'role_metier' => $request->role_metier,
-                'date_naissance' => $request->date_naissance,
-                'date_embauche' => $request->date_embauche,
-                'adresse' => $request->adresse,
-                'urgence_nom' => $request->urgence_nom,
-                'urgence_telephone' => $request->urgence_telephone,
-                'notes' => $request->notes,
-                'avatar_couleur' => $request->avatar_couleur ?? $employe->avatar_couleur,
-                'actif' => $request->has('actif') ? $request->actif : $employe->actif,
+                'nom'          => $request->nom,
+                'prenom'       => $request->prenom,
+                'telephone'    => $request->telephone,
+                'email'        => $request->email,
+                'type'         => $request->type,
+                'role_metier'  => $request->role_metier,
+                'date_embauche'=> $request->date_embauche,
+                'notes'        => $request->notes,
+                'actif'        => $request->boolean('actif', $employe->actif),
             ]);
 
-            // Mettre à jour les permissions si nécessaire
-            if ($request->has('permissions') && $employe->user_id) {
-                // Supprimer les anciennes permissions
-                Permission::where('utilisateur_id', $employe->user_id)->delete();
+            // Sync permissions si un compte utilisateur est lié
+            if ($request->filled('permissions')) {
+                $user = $employe->email
+                    ? User::where('email', $employe->email)->first()
+                    : null;
 
-                // Créer les nouvelles
-                foreach ($request->permissions as $perm) {
-                    Permission::create([
-                        'utilisateur_id' => $employe->user_id,
-                        'module' => $perm['module'],
-                        'action' => $perm['action'],
-                        'projet_id' => $perm['projet_id'] ?? null,
-                        'autorise' => $perm['autorise'] ?? true,
-                        'accorde_par' => Auth::id(),
-                    ]);
+                if ($user) {
+                    Permission::where('utilisateur_id', $user->id)->delete();
+                    $this->syncPermissions($user->id, $request->permissions);
                 }
             }
 
@@ -344,54 +279,52 @@ class EmployeController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Erreur : ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Remove the specified employee from storage.
+     * Supprime un employé (SoftDelete).
+     * Refusé si des présences récentes existent dans detail_presences.
      */
     public function destroy(Employe $employe)
     {
         try {
-            // Vérifier s'il y a des présences récentes
-            if ($employe->presences()->where('date', '>=', now()->subDays(30))->exists()) {
+            $aDesPresencesRecentes = $employe->detailPresences()
+                ->whereHas('presence', fn($q) => $q->where('date', '>=', now()->subDays(30)))
+                ->exists();
+
+            if ($aDesPresencesRecentes) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Impossible de supprimer un employé avec des présences récentes.'
+                    'message' => 'Impossible de supprimer un employé avec des présences dans les 30 derniers jours.',
                 ], 422);
             }
 
-            // Supprimer l'utilisateur associé si existe
-            if ($employe->user_id) {
-                User::find($employe->user_id)?->delete();
+            // Supprimer le compte utilisateur lié si existant
+            if ($employe->email) {
+                User::where('email', $employe->email)->first()?->delete();
             }
 
             $employe->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Employé supprimé avec succès.'
-            ]);
+            return response()->json(['success' => true, 'message' => 'Employé supprimé avec succès.']);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * Assign employee to a project.
+     * Affecte un employé à un projet.
      */
     public function assignProject(Request $request, Employe $employe)
     {
         $validator = Validator::make($request->all(), [
-            'projet_id' => 'required|exists:projets,id',
+            'projet_id'       => 'required|exists:projets,id',
             'role_sur_projet' => 'nullable|string|max:100',
-            'date_debut' => 'required|date',
-            'date_fin' => 'nullable|date|after:date_debut',
+            'date_debut'      => 'required|date',
+            'date_fin'        => 'nullable|date|after:date_debut',
         ]);
 
         if ($validator->fails()) {
@@ -399,48 +332,91 @@ class EmployeController extends Controller
         }
 
         $affectation = AffectationProjet::create([
-            'projet_id' => $request->projet_id,
-            'employe_id' => $employe->id,
+            'projet_id'       => $request->projet_id,
+            'employe_id'      => $employe->id,
             'role_sur_projet' => $request->role_sur_projet ?? $employe->role_metier,
-            'date_debut' => $request->date_debut,
-            'date_fin' => $request->date_fin,
+            'date_debut'      => $request->date_debut,
+            'date_fin'        => $request->date_fin,
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Employé affecté au projet avec succès.',
-            'affectation' => $affectation->load('projet')
+            'success'     => true,
+            'message'     => 'Employé affecté au projet avec succès.',
+            'affectation' => $affectation->load('projet'),
         ]);
     }
 
     /**
-     * Get employee presence history.
+     * Historique des présences d'un employé (via detail_presences).
      */
     public function getPresences(Employe $employe, Request $request)
     {
-        $query = $employe->presences()->with('projet');
+        $query = $employe->detailPresences()
+            ->with(['presence.projet']);
 
-        if ($request->has('mois')) {
-            $query->whereYear('date', substr($request->mois, 0, 4))
+        if ($request->filled('mois')) {
+            $query->whereHas('presence', function ($q) use ($request) {
+                $q->whereYear('date', substr($request->mois, 0, 4))
                   ->whereMonth('date', substr($request->mois, 5, 2));
+            });
         }
 
-        $presences = $query->latest('date')->paginate(30);
+        $details = $query->latest('created_at')->paginate(30);
 
-        return response()->json($presences);
+        return response()->json($details);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers privés
+    // -------------------------------------------------------------------------
+
+    /**
+     * Insère en lot les permissions pour un utilisateur.
+     */
+    private function syncPermissions(int $userId, array $permissions): void
+    {
+        $rows = [];
+        $now  = now();
+
+        foreach ($permissions as $perm => $modules) {
+            if (! is_array($modules)) {
+                continue;
+            }
+            foreach ($modules as $module => $actions) {
+                if (! is_array($actions)) {
+                    continue;
+                }
+                foreach ($actions as $action => $details) {
+                    $rows[] = [
+                        'utilisateur_id' => $userId,
+                        'module'         => $perm,
+                        'action'         => $module,
+                        'projet_id'      => $details['projet_id'] ?? null,
+                        'autorise'       => $details['autorise']  ?? true,
+                        'accorde_par'    => Auth::id(),
+                        'created_at'     => $now,
+                        'updated_at'     => $now,
+                    ];
+                }
+            }
+        }
+
+        if (! empty($rows)) {
+            Permission::insert($rows);
+        }
     }
 
     /**
-     * Generate a unique email for the employee.
+     * Génère un email unique @keuf.cm depuis prénom.nom.
      */
-    private function generateEmail($prenom, $nom)
+    private function generateEmail(string $prenom, string $nom): string
     {
-        $base = strtolower(Str::ascii($prenom . '.' . $nom)) . '@keuf.cm';
-        $email = $base;
+        $base    = strtolower(Str::ascii("{$prenom}.{$nom}")) . '@keuf.cm';
+        $email   = $base;
         $counter = 1;
 
         while (User::where('email', $email)->exists()) {
-            $email = str_replace('@keuf.cm', $counter . '@keuf.cm', $base);
+            $email = str_replace('@keuf.cm', "{$counter}@keuf.cm", $base);
             $counter++;
         }
 
@@ -448,31 +424,25 @@ class EmployeController extends Controller
     }
 
     /**
-     * Determine user role based on permissions.
+     * Détermine le rôle utilisateur à partir des modules accordés.
      */
-    private function determineRoleFromPermissions($permissions)
+    private function determineRoleFromPermissions(array $permissions): string
     {
-        // Logique pour déterminer le rôle en fonction des permissions
-        $hasFullAccess = collect($permissions)->where('module', 'all')->isNotEmpty();
-        
-        if ($hasFullAccess) {
-            return 'admin';
-        }
+        $modules = collect($permissions)->keys();
 
-        $modules = collect($permissions)->pluck('module')->unique();
-        
+        if ($modules->contains('all')) {
+            return User::ROLE_ADMIN;
+        }
         if ($modules->contains('stocks') && $modules->count() === 1) {
-            return 'gestionnaire_stock';
+            return User::ROLE_GESTIONNAIRE_STOCK;
         }
-
         if ($modules->contains('presences') && $modules->contains('signalements')) {
-            return 'controleur';
+            return User::ROLE_CONTROLEUR;
         }
-
         if ($modules->contains('projets') && $modules->contains('employes')) {
-            return 'directeur_technique';
+            return User::ROLE_DIRECTEUR_TECHNIQUE;
         }
 
-        return 'controleur'; // Rôle par défaut
+        return User::ROLE_CONTROLEUR;
     }
 }

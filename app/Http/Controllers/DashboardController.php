@@ -8,134 +8,121 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Projet;
 use App\Models\Presence;
+use App\Models\DetailPresence;
 use App\Models\StockProjet;
 use App\Models\Signalement;
 use App\Models\Facture;
-use App\Models\Fournisseurs;
-use App\Models\Phase;
-
+use App\Models\Fournisseur;
+use App\Models\PhaseProjet;
 use Illuminate\Support\Str;
-
 
 class DashboardController extends Controller
 {
     /**
-     * Display the dashboard based on user role
+     * Redirige vers le dashboard correspondant au rôle de l'utilisateur connecté.
      */
     public function index()
     {
         $user = Auth::user();
-        
-        // Get role-specific dashboard data
-        switch ($user->role) {
-            case 'admin':
-                return $this->adminDashboard();
-            case 'directeur_technique':
-                return $this->directeurTechniqueDashboard();
-            case 'controleur':
-                return $this->controleurDashboard();
-            case 'gestionnaire_stock':
-                return $this->gestionnaireStockDashboard();
-            default:
-                return $this->defaultDashboard();
-        }
+
+        return match ($user->role) {
+            'admin'                => $this->adminDashboard(),
+            'directeur_technique'  => $this->directeurTechniqueDashboard(),
+            'controleur'           => $this->controleurDashboard(),
+            'gestionnaire_stock'   => $this->gestionnaireStockDashboard(),
+            default                => $this->defaultDashboard(),
+        };
     }
 
-    /**
-     * Admin Dashboard
-     */
+    // -------------------------------------------------------------------------
+    // Dashboard Admin
+    // -------------------------------------------------------------------------
+
     private function adminDashboard()
     {
-        // KPIs
-        $totalProjets = Projet::where('est_stock_central', 0)->count();
-        $projetsActifs = Projet::where('est_stock_central', 0)
-            ->whereIn('statut', ['en_cours', 'verification', 'retard'])
-            ->count();
-        
-        $projetsParStatut = Projet::where('est_stock_central', 0)
+        $totalProjets  = Projet::chantiers()->count();
+        $projetsActifs = Projet::chantiers()->actifs()->count();
+
+        $projetsParStatut = Projet::chantiers()
             ->select('statut', DB::raw('count(*) as total'))
             ->groupBy('statut')
             ->pluck('total', 'statut')
             ->toArray();
 
-        $presencesToday = Presence::whereDate('date', today())
-            ->where('statut', 'present')
-            ->count();
-        
-        $absentsToday = Presence::whereDate('date', today())
-            ->where('statut', 'absent')
+        // Présences du jour : on compte dans detail_presences via les sessions du jour
+        $presencesToday = DetailPresence::where('statut', 'present')
+            ->whereHas('presence', fn($q) => $q->whereDate('date', today()))
             ->count();
 
-        // Stock alerts
+        $absentsToday = DetailPresence::where('statut', 'absent')
+            ->whereHas('presence', fn($q) => $q->whereDate('date', today()))
+            ->count();
+
+        // Alertes stocks (tous projets, central inclus)
         $stockAlerts = StockProjet::with(['projet', 'materiau'])
             ->whereRaw('quantite <= seuil_alerte')
             ->where('seuil_alerte', '>', 0)
             ->get();
-        
+
         $stockAlertsCount = $stockAlerts->count();
 
-        // Signalements en attente
+        // Signalements ouverts
         $signalementsEnAttente = Signalement::whereIn('statut', ['ouvert', 'en_cours'])
             ->with(['projet', 'auteur'])
             ->latest()
             ->take(5)
             ->get();
-        
+
         $signalementsCount = Signalement::whereIn('statut', ['ouvert', 'en_cours'])->count();
 
-        // Projets en cours avec progression
-        $projetsEnCours = Projet::where('est_stock_central', 0)
-            ->whereIn('statut', ['en_cours', 'verification', 'retard'])
+        // Projets en cours
+        $projetsEnCours = Projet::chantiers()
+            ->actifs()
             ->with('phaseActuelle')
             ->orderBy('date_fin_prevue')
             ->take(5)
             ->get();
 
-        // Alertes combinées pour les notifications
+        // Alertes combinées pour le panneau de notifications
         $alertes = collect();
-        
-        // Ajouter les alertes stock
+
         foreach ($stockAlerts as $stock) {
             $alertes->push([
-                'type' => 'stock',
-                'icon' => 'box',
-                'color' => 'red',
-                'title' => 'Stock critique - ' . $stock->materiau->nom,
-                'description' => number_format($stock->quantite, 0) . ' ' . $stock->materiau->unite . ' · Seuil : ' . number_format($stock->seuil_alerte, 0),
-                'projet' => $stock->projet->nom,
-                'date' => $stock->updated_at?->format('d/m/Y'),
-                'link' =>  '#'
+                'type'        => 'stock',
+                'icon'        => 'box',
+                'color'       => 'red',
+                'title'       => 'Stock critique — ' . $stock->materiau->nom,
+                'description' => number_format($stock->quantite, 0) . ' ' . $stock->materiau->unite
+                                 . ' · Seuil : ' . number_format($stock->seuil_alerte, 0),
+                'projet'      => $stock->projet->nom,
+                'date'        => $stock->updated_at?->format('d/m/Y'),
+                'link'        => '#',
             ]);
         }
 
-        // Ajouter les signalements récents
         foreach ($signalementsEnAttente as $sig) {
             $alertes->push([
-                'type' => 'signalement',
-                'icon' => 'exclamation-triangle',
-                'color' => 'orange',
-                'title' => $sig->type === 'securite' ? 'Signalement sécurité' : 'Signalement ' . $sig->type,
+                'type'        => 'signalement',
+                'icon'        => 'exclamation-triangle',
+                'color'       => 'orange',
+                'title'       => 'Signalement ' . $sig->type,
                 'description' => Str::limit($sig->description, 50),
-                'projet' => $sig->projet->nom,
-                'date' => $sig->created_at,
-                'link' => '#'
+                'projet'      => $sig->projet->nom,
+                'date'        => $sig->created_at,
+                'link'        => '#',
             ]);
         }
 
-        // Trier par date (récent d'abord)
         $alertes = $alertes->sortByDesc('date')->take(6);
 
-        // Statistiques financières
+        // Finances
         $chiffreAffairesMois = Facture::where('type', 'client')
             ->whereMonth('date_emission', now()->month)
             ->whereYear('date_emission', now()->year)
-            ->sum(DB::raw('montant_ht * (1 + tva/100)'));
+            ->sum(DB::raw('montant_ht * (1 + tva / 100)'));
 
-        $facturesEnAttente = Facture::whereIn('statut', ['envoyee', 'en_retard'])
-            ->count();
-
-        // Budget total des projets
-        $budgetTotal = Projet::where('est_stock_central', 0)->sum('budget');
+        $facturesEnAttente = Facture::whereIn('statut', ['envoyee', 'en_retard'])->count();
+        $budgetTotal       = Projet::chantiers()->sum('budget');
 
         return view('dashboards.admin', compact(
             'totalProjets',
@@ -155,30 +142,22 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Directeur Technique Dashboard
-     */
+    // -------------------------------------------------------------------------
+    // Dashboard Directeur Technique
+    // -------------------------------------------------------------------------
+
     private function directeurTechniqueDashboard()
     {
-        // Focus on project progress, phases, and technical aspects
-        $projets = Projet::where('est_stock_central', 0)
-            ->with(['phases' => function($q) {
-                $q->orderBy('ordre');
-            }, 'phaseActuelle'])
+        $projets = Projet::chantiers()
+            ->with(['phases' => fn($q) => $q->orderBy('ordre'), 'phaseActuelle'])
             ->get();
 
-        $projetsRetard = Projet::where('est_stock_central', 0)
-            ->where('statut', 'retard')
-            ->count();
+        $projetsRetard       = Projet::chantiers()->where('statut', 'retard')->count();
+        $progressionMoyenne  = Projet::chantiers()->avg('progression');
 
-        $progressionMoyenne = Projet::where('est_stock_central', 0)
-            ->avg('progression');
-
-        $phasesEnCours = DB::table('phases_projet')
-            ->join('projets', 'projets.id', '=', 'phases_projet.projet_id')
-            ->where('projets.est_stock_central', 0)
-            ->whereNull('phases_projet.date_fin_reelle')
-            ->whereNotNull('phases_projet.date_debut_reelle')
+        $phasesEnCours = PhaseProjet::whereHas('projet', fn($q) => $q->chantiers())
+            ->whereNotNull('date_debut_reelle')
+            ->whereNull('date_fin_reelle')
             ->count();
 
         $signalementsTechniques = Signalement::whereIn('type', ['avancement', 'materiaux', 'securite'])
@@ -197,20 +176,27 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Contrôleur Dashboard
-     */
+    // -------------------------------------------------------------------------
+    // Dashboard Contrôleur
+    // -------------------------------------------------------------------------
+
     private function controleurDashboard()
     {
-        // Focus on quality control, signalements, presences
-        $today = now()->toDateString();
+        $today = today()->toDateString();
 
-        $presencesAujourdhui = Presence::whereDate('date', $today)
-            ->with(['employe', 'projet'])
+        // Sessions de pointage du jour avec leurs détails
+        $sessionsAujourdhui = Presence::whereDate('date', $today)
+            ->with(['details.employe', 'projet'])
             ->get();
 
-        $presencesCount = $presencesAujourdhui->count();
-        $absentsCount = $presencesAujourdhui->where('statut', 'absent')->count();
+        // Totaux calculés depuis les détails
+        $presencesCount = DetailPresence::where('statut', 'present')
+            ->whereHas('presence', fn($q) => $q->whereDate('date', $today))
+            ->count();
+
+        $absentsCount = DetailPresence::where('statut', 'absent')
+            ->whereHas('presence', fn($q) => $q->whereDate('date', $today))
+            ->count();
 
         $signalementsOuverts = Signalement::whereIn('statut', ['ouvert', 'en_cours'])
             ->with(['projet', 'auteur'])
@@ -219,12 +205,13 @@ class DashboardController extends Controller
 
         $signalementsByPriority = $signalementsOuverts->groupBy('priorite')->map->count();
 
-        $projetsAVerifier = Projet::where('statut', 'verification')
+        $projetsAVerifier = Projet::chantiers()
+            ->where('statut', 'verification')
             ->with('phases')
             ->get();
 
         return view('dashboards.controleur', compact(
-            'presencesAujourdhui',
+            'sessionsAujourdhui',
             'presencesCount',
             'absentsCount',
             'signalementsOuverts',
@@ -233,14 +220,14 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Gestionnaire de Stock Dashboard
-     */
+    // -------------------------------------------------------------------------
+    // Dashboard Gestionnaire de Stock
+    // -------------------------------------------------------------------------
+
     private function gestionnaireStockDashboard()
     {
-        // Focus on inventory management
-        $stockCentral = Projet::where('est_stock_central', 1)->first();
-        
+        $stockCentral = Projet::stockCentral()->first();
+
         $stockAlerts = StockProjet::with(['projet', 'materiau'])
             ->whereRaw('quantite <= seuil_alerte')
             ->where('seuil_alerte', '>', 0)
@@ -250,7 +237,7 @@ class DashboardController extends Controller
             ->join('materiaux', 'materiaux.id', '=', 'mouvements_stock.materiau_id')
             ->join('utilisateurs', 'utilisateurs.id', '=', 'mouvements_stock.effectue_par')
             ->leftJoin('projets as source', 'source.id', '=', 'mouvements_stock.source_projet_id')
-            ->leftJoin('projets as dest', 'dest.id', '=', 'mouvements_stock.dest_projet_id')
+            ->leftJoin('projets as dest',   'dest.id',   '=', 'mouvements_stock.dest_projet_id')
             ->select(
                 'mouvements_stock.*',
                 'materiaux.nom as materiau_nom',
@@ -274,8 +261,7 @@ class DashboardController extends Controller
             ->groupBy('materiaux.categorie')
             ->get();
 
-        // $fournisseursActifs = Fournisseurs::get()->count();
-        $fournisseursActifs = 2;
+        $fournisseursActifs = \App\Models\Fournisseur::count();
 
         return view('dashboards.gestionnaire-stock', compact(
             'stockCentral',
@@ -286,31 +272,33 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Default Dashboard (fallback)
-     */
+    // -------------------------------------------------------------------------
+    // Fallback
+    // -------------------------------------------------------------------------
+
     private function defaultDashboard()
     {
         return view('dashboards.default');
     }
 
+    // -------------------------------------------------------------------------
+    // API : stats rapides (polling AJAX)
+    // -------------------------------------------------------------------------
+
     /**
-     * Get quick stats for AJAX calls
+     * Retourne les 4 KPIs principaux en JSON pour le rafraîchissement en temps réel.
      */
     public function getQuickStats()
     {
         $stats = [
-            'projets_actifs' => Projet::where('est_stock_central', 0)
-                ->whereIn('statut', ['en_cours', 'verification', 'retard'])
+            'projets_actifs'      => Projet::chantiers()->actifs()->count(),
+            'presences_aujourdhui' => DetailPresence::where('statut', 'present')
+                ->whereHas('presence', fn($q) => $q->whereDate('date', today()))
                 ->count(),
-            'presences_aujourdhui' => Presence::whereDate('date', today())
-                ->where('statut', 'present')
-                ->count(),
-            'alertes_stock' => StockProjet::whereRaw('quantite <= seuil_alerte')
+            'alertes_stock'       => StockProjet::whereRaw('quantite <= seuil_alerte')
                 ->where('seuil_alerte', '>', 0)
                 ->count(),
-            'signalements_ouverts' => Signalement::whereIn('statut', ['ouvert', 'en_cours'])
-                ->count(),
+            'signalements_ouverts' => Signalement::whereIn('statut', ['ouvert', 'en_cours'])->count(),
         ];
 
         return response()->json($stats);

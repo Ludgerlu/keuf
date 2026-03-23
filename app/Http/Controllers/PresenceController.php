@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Presence;
+use App\Models\DetailPresence;
 use App\Models\Projet;
 use App\Models\Employe;
 use App\Models\AffectationProjet;
@@ -12,86 +13,100 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-
 class PresenceController extends Controller
 {
     /**
-     * Display presence management page for a specific project.
+     * Affiche la page de gestion des présences pour un projet à une date donnée.
+     * Charge la session (entête) du jour si elle existe déjà.
      */
-    public function index(Projet $projet)
+    public function index(Projet $projet, Request $request)
     {
-        // Get today's presences
-        $todayPresences = Presence::where('projet_id', $projet->id)
-            ->whereDate('date', today())
-            ->with(['employe', 'saisiePar'])
-            ->get()
-            ->keyBy('employe_id');
+        $date = $request->date ? $request->date : today()->toDateString();
 
-        // Get all employees assigned to this project (active assignments)
-        $assignedEmployees = Employe::get();
+        // Session de pointage du jour pour ce projet (entête)
+        $session = Presence::where('projet_id', $projet->id)
+            ->whereDate('date', $date)
+            ->with(['details.employe', 'saisiePar'])
+            ->first();
 
-        // Get external prestataires (unique list)
-        $prestataires = [];
+        // Détails indexés par employe_id pour accès rapide dans la vue
+        $detailsParEmploye = $session
+            ? $session->details->keyBy('employe_id')
+            : collect();
 
-
-        // Get prestataire employees
-        $prestataireEmployees = [];
+        // Tous les employés affectés au projet (actifs)
+        $assignedEmployees = Employe::whereHas('affectations', function ($q) use ($projet) {
+            $q->where('projet_id', $projet->id)
+              ->whereNull('date_fin');
+        })->actifs()->get();
 
         $stats = [
-            'total' => $todayPresences->count(),
-            'present' => $todayPresences->where('statut', 'present')->count(),
-            'absent' => $todayPresences->where('statut', 'absent')->count(),
-            'retard' => $todayPresences->where('statut', 'en_retard')->count(),
+            'total'        => $detailsParEmploye->count(),
+            'present'      => $detailsParEmploye->where('statut', 'present')->count(),
+            'absent'       => $detailsParEmploye->where('statut', 'absent')->count(),
+            'demi_journee' => $detailsParEmploye->where('statut', 'demi_journee')->count(),
         ];
 
         return view('presences.index', compact(
             'projet',
-            'todayPresences',
+            'session',
+            'detailsParEmploye',
             'assignedEmployees',
-            'prestataires',
-            'prestataireEmployees',
-            'stats'
+            'stats',
+            'date'
         ));
     }
 
     /**
-     * Store or update presences for a project.
+     * Crée ou met à jour la session de pointage et tous ses détails employés.
+     * Une seule session par projet par jour (uq_presence_session).
+     * Les détails sont upsertés individuellement (uq_detail_presence).
      */
     public function store(Request $request, Projet $projet)
     {
         $validator = Validator::make($request->all(), [
-            'presences' => 'required|array',
-            'presences.*.employe_id' => 'required|exists:employes,id',
-            'presences.*.statut' => 'required|in:present,absent,en_retard,absent_justifie',
-            'presences.*.heure_debut' => 'nullable|date_format:H:i',
-            'presences.*.heure_fin' => 'nullable|date_format:H:i|after:presences.*.heure_debut',
-            'presences.*.heures_sup' => 'nullable|numeric|min:0|max:24',
-            'presences.*.note' => 'nullable|string|max:255',
-            'date' => 'sometimes|date|before_or_equal:today',
+            'date'                          => 'sometimes|date|before_or_equal:today',
+            'note_session'                  => 'nullable|string|max:500',
+            'presences'                     => 'required|array|min:1',
+            'presences.*.employe_id'        => 'required|exists:employes,id',
+            'presences.*.statut'            => 'required|in:present,absent,demi_journee',
+            'presences.*.heure_debut'       => 'nullable|date_format:H:i',
+            'presences.*.heure_fin'         => 'nullable|date_format:H:i|after:presences.*.heure_debut',
+            'presences.*.note'              => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $date = $request->date ?: today();
+        $date = $request->date ?: today()->toDateString();
 
         DB::beginTransaction();
         try {
-            foreach ($request->presences as $presenceData) {
-                Presence::updateOrCreate(
+            // 1. Créer ou récupérer la session de pointage (entête)
+            $session = Presence::updateOrCreate(
+                [
+                    'projet_id' => $projet->id,
+                    'date'      => $date,
+                ],
+                [
+                    'saisie_par' => Auth::id(),
+                    'note'       => $request->note_session ?? null,
+                ]
+            );
+
+            // 2. Upsert des détails par employé
+            foreach ($request->presences as $data) {
+                DetailPresence::updateOrCreate(
                     [
-                        'projet_id' => $projet->id,
-                        'employe_id' => $presenceData['employe_id'],
-                        'date' => $date,
+                        'presence_id' => $session->id,
+                        'employe_id'  => $data['employe_id'],
                     ],
                     [
-                        'saisie_par' => Auth::id(),
-                        'heure_debut' => $presenceData['heure_debut'] ?? null,
-                        'heure_fin' => $presenceData['heure_fin'] ?? null,
-                        'statut' => $presenceData['statut'],
-                        'heures_sup' => $presenceData['heures_sup'] ?? 0,
-                        'note' => $presenceData['note'] ?? null,
+                        'statut'      => $data['statut'],
+                        'heure_debut' => $data['heure_debut'] ?? null,
+                        'heure_fin'   => $data['heure_fin']   ?? null,
+                        'note'        => $data['note']        ?? null,
                     ]
                 );
             }
@@ -101,67 +116,67 @@ class PresenceController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Présences enregistrées avec succès.',
-                'stats' => $this->getPresenceStats($projet->id, $date)
+                'stats'   => $this->getSessionStats($session->id),
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => 'Erreur : ' . $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get presence history for a project.
+     * Historique des sessions de pointage d'un projet.
+     * Chaque session inclut ses détails employés.
      */
     public function history(Projet $projet, Request $request)
     {
         $query = Presence::where('projet_id', $projet->id)
-            ->with(['employe', 'saisiePar']);
+            ->with(['details.employe', 'saisiePar']);
 
-        // Filter by date range
-        if ($request->has('from')) {
+        if ($request->filled('from')) {
             $query->whereDate('date', '>=', $request->from);
         }
-        if ($request->has('to')) {
+        if ($request->filled('to')) {
             $query->whereDate('date', '<=', $request->to);
         }
 
-        // Filter by employee
-        if ($request->has('employe_id')) {
-            $query->where('employe_id', $request->employe_id);
+        // Filtrer par employé : on passe par les détails
+        if ($request->filled('employe_id')) {
+            $query->whereHas('details', function ($q) use ($request) {
+                $q->where('employe_id', $request->employe_id);
+            });
         }
 
-        $presences = $query->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $sessions = $query->orderBy('date', 'desc')->paginate(20);
 
         if ($request->ajax()) {
-            return response()->json($presences);
+            return response()->json($sessions);
         }
 
-        $employes = Employe::whereHas('presences', function($q) use ($projet) {
+        // Liste des employés ayant au moins un détail sur ce projet
+        $employes = Employe::whereHas('detailPresences.presence', function ($q) use ($projet) {
             $q->where('projet_id', $projet->id);
         })->get();
 
-        return view('presences.history', compact('projet', 'presences', 'employes'));
+        return view('presences.history', compact('projet', 'sessions', 'employes'));
     }
 
     /**
-     * Update a specific presence record.
+     * Mise à jour d'un détail de présence individuel (statut, heures, note).
      */
-    public function update(Request $request, Presence $presence)
+    public function updateDetail(Request $request, DetailPresence $detail)
     {
-        $this->authorize('update', $presence);
+        $this->authorize('update', $detail->presence);
 
         $validator = Validator::make($request->all(), [
-            'statut' => 'required|in:present,absent,en_retard,absent_justifie',
+            'statut'      => 'required|in:present,absent,demi_journee',
             'heure_debut' => 'nullable|date_format:H:i',
-            'heure_fin' => 'nullable|date_format:H:i|after:heure_debut',
-            'heures_sup' => 'nullable|numeric|min:0|max:24',
-            'note' => 'nullable|string|max:255',
+            'heure_fin'   => 'nullable|date_format:H:i|after:heure_debut',
+            'note'        => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -169,71 +184,77 @@ class PresenceController extends Controller
         }
 
         try {
-            $presence->update($request->only([
-                'statut', 'heure_debut', 'heure_fin', 'heures_sup', 'note'
-            ]));
+            $detail->update($request->only(['statut', 'heure_debut', 'heure_fin', 'note']));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Présence mise à jour.',
-                'presence' => $presence->load('employe', 'saisiePar')
+                'detail'  => $detail->load('employe'),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => 'Erreur : ' . $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Delete a presence record.
+     * Supprime une session de pointage complète (cascade sur les détails).
      */
     public function destroy(Presence $presence)
     {
         $this->authorize('delete', $presence);
 
         try {
+            // Les détails sont supprimés en cascade (ON DELETE CASCADE en BDD)
             $presence->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Présence supprimée.'
+                'message' => 'Session de présence supprimée.',
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => 'Erreur : ' . $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get presence statistics.
+     * Supprime un détail de présence individuel sans toucher la session.
      */
-    private function getPresenceStats($projetId, $date)
+    public function destroyDetail(DetailPresence $detail)
     {
-        $presences = Presence::where('projet_id', $projetId)
-            ->whereDate('date', $date)
-            ->get();
+        $this->authorize('delete', $detail->presence);
 
-        return [
-            'total' => $presences->count(),
-            'present' => $presences->where('statut', 'present')->count(),
-            'absent' => $presences->where('statut', 'absent')->count(),
-            'en_retard' => $presences->where('statut', 'en_retard')->count(),
-            'absent_justifie' => $presences->where('statut', 'absent_justifie')->count(),
-        ];
+        try {
+            $detail->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ligne de présence supprimée.',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
-     * Export presence report.
+     * Export des présences sur une période.
      */
     public function export(Projet $projet, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'from' => 'required|date',
-            'to' => 'required|date|after_or_equal:from',
+            'from'   => 'required|date',
+            'to'     => 'required|date|after_or_equal:from',
             'format' => 'required|in:pdf,excel,csv',
         ]);
 
@@ -241,9 +262,26 @@ class PresenceController extends Controller
             return back()->withErrors($validator);
         }
 
-        // Export logic here (using Laravel Excel or similar)
-        // This would generate a report of presences for the period
-        
+        // TODO: implémenter avec Laravel Excel ou Barryvdh PDF
         return back()->with('success', 'Export en cours de génération...');
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers privés
+    // -------------------------------------------------------------------------
+
+    /**
+     * Statistiques d'une session depuis ses détails.
+     */
+    private function getSessionStats(int $sessionId): array
+    {
+        $details = DetailPresence::where('presence_id', $sessionId)->get();
+
+        return [
+            'total'        => $details->count(),
+            'present'      => $details->where('statut', 'present')->count(),
+            'absent'       => $details->where('statut', 'absent')->count(),
+            'demi_journee' => $details->where('statut', 'demi_journee')->count(),
+        ];
     }
 }

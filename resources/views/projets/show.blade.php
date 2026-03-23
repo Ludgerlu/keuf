@@ -446,7 +446,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($projet->mouvementsStock as $mouvement)
+                @forelse($mouvementsStock as $mouvement)
                 <tr>
                     <td class="fw-medium">{{ $mouvement->materiau->nom ?? 'N/A' }}</td>
                     <td>
@@ -464,7 +464,7 @@
                     </td>
                     <td>{{ $mouvement->quantite }}</td>
                     <td style="color:#6B7280;">{{ $mouvement->phase ?? 'N/A' }}</td>
-                    <td>{{ $mouvement->created_at->format('d/m/Y') }}</td>
+                    <td>{{ $mouvement->created_at }}</td>
                     <td>{{ $mouvement->effectuePar->prenom ?? '' }} {{ $mouvement->effectuePar->nom ?? '' }}</td>
                 </tr>
                 @empty
@@ -565,7 +565,7 @@
             </div>
             <div style="font-size:.8rem;color:#374151;margin:.25rem 0;">{{ $signalement->description }}</div>
             <div class="d-flex gap-2" style="font-size:.7rem;color:#9CA3AF;">
-                <span><i class="bi bi-calendar3 me-1"></i>{{ $signalement->created_at->format('d/m/Y') }}</span>
+                <span><i class="bi bi-calendar3 me-1"></i>{{ $signalement->created_at }}</span>
                 @if($signalement->auteur)
                 <span><i class="bi bi-person me-1"></i>{{ $signalement->auteur->prenom ?? '' }}</span>
                 @endif

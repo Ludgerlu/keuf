@@ -13,7 +13,7 @@ class Projet extends Model
     use SoftDeletes;
 
     protected $table = 'projets';
-    
+
     protected $fillable = [
         'est_stock_central',
         'client_nom',
@@ -30,22 +30,25 @@ class Projet extends Model
         'date_fin_prevue',
         'date_fin_reelle',
         'description',
-        'phase_actuelle_id'
+        'phase_actuelle_id',
     ];
 
     protected $casts = [
         'est_stock_central' => 'boolean',
-        'progression' => 'decimal:2',
-        'budget' => 'decimal:2',
-        'date_debut' => 'date',
-        'date_fin_prevue' => 'date',
-        'date_fin_reelle' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'progression'       => 'decimal:2',
+        'budget'            => 'decimal:2',
+        'date_debut'        => 'date',
+        'date_fin_prevue'   => 'date',
+        'date_fin_reelle'   => 'date',
+        'created_at'        => 'datetime',
+        'updated_at'        => 'datetime',
+        'deleted_at'        => 'datetime',
     ];
 
+    // -------------------------------------------------------------------------
     // Relations
+    // -------------------------------------------------------------------------
+
     public function phaseActuelle(): BelongsTo
     {
         return $this->belongsTo(PhaseProjet::class, 'phase_actuelle_id');
@@ -56,7 +59,12 @@ class Projet extends Model
         return $this->hasMany(PhaseProjet::class, 'projet_id')->orderBy('ordre');
     }
 
-    public function employes()
+    public function historiquePhases(): HasMany
+    {
+        return $this->hasMany(HistoriquePhase::class, 'projet_id');
+    }
+
+    public function employes(): BelongsToMany
     {
         return $this->belongsToMany(Employe::class, 'affectation_projets', 'projet_id', 'employe_id')
                     ->withPivot('role_sur_projet', 'date_debut', 'date_fin')
@@ -68,6 +76,10 @@ class Projet extends Model
         return $this->hasMany(AffectationProjet::class, 'projet_id');
     }
 
+    /**
+     * Sessions de pointage du projet (entêtes).
+     * Chaque session contient les détails par employé via ->details().
+     */
     public function presences(): HasMany
     {
         return $this->hasMany(Presence::class, 'projet_id');
@@ -83,11 +95,17 @@ class Projet extends Model
         return $this->hasMany(StockProjet::class, 'projet_id');
     }
 
-    public function mouvementsStock(): HasMany
+    /**
+     * Mouvements où ce projet est la source (sortie / transfert vers un autre).
+     */
+    public function mouvementsSource(): HasMany
     {
         return $this->hasMany(MouvementStock::class, 'source_projet_id');
     }
 
+    /**
+     * Mouvements où ce projet est la destination (entrée / transfert reçu).
+     */
     public function mouvementsDestination(): HasMany
     {
         return $this->hasMany(MouvementStock::class, 'dest_projet_id');
@@ -108,13 +126,67 @@ class Projet extends Model
         return $this->hasMany(PaiementEmploye::class, 'projet_id');
     }
 
-    public function historiquePhases(): HasMany
-    {
-        return $this->hasMany(HistoriquePhase::class, 'projet_id');
-    }
-
     public function permissions(): HasMany
     {
         return $this->hasMany(Permission::class, 'projet_id');
+    }
+
+    // -------------------------------------------------------------------------
+    // Scopes utiles
+    // -------------------------------------------------------------------------
+
+    /**
+     * Uniquement les vrais chantiers (exclut le stock central).
+     */
+    public function scopeChantiers($query)
+    {
+        return $query->where('est_stock_central', false);
+    }
+
+    /**
+     * Récupère le projet stock central.
+     */
+    public function scopeStockCentral($query)
+    {
+        return $query->where('est_stock_central', true);
+    }
+
+    public function scopeStatut($query, string $statut)
+    {
+        return $query->where('statut', $statut);
+    }
+
+    public function scopeActifs($query)
+    {
+        return $query->whereIn('statut', ['debut', 'en_cours', 'verification', 'retard']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Accessors
+    // -------------------------------------------------------------------------
+
+    /**
+     * Progression calculée depuis la moyenne des phases (si elles existent),
+     * sinon retourne la progression stockée directement.
+     */
+    public function getProgressionCalculeeAttribute(): float
+    {
+        $phases = $this->phases;
+
+        if ($phases->isEmpty()) {
+            return (float) $this->progression;
+        }
+
+        return round($phases->avg('progression'), 2);
+    }
+
+    /**
+     * Indique si le projet est en retard par rapport à la date de fin prévue.
+     */
+    public function getEstEnRetardAttribute(): bool
+    {
+        return $this->date_fin_prevue
+            && $this->date_fin_prevue->isPast()
+            && $this->statut !== 'termine';
     }
 }
