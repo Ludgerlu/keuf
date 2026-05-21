@@ -47,13 +47,37 @@ Route::middleware('auth')->group(function () {
         Route::post('/{projet}/phases', [ProjetController::class, 'addPhase'])->name('phases.store');
     });
     Route::prefix('projets/{projet}/stocks')->name('stocks.')->group(function () {
-        Route::get('/', [StockController::class, 'index'])->name('index');
-        Route::post('/receive', [StockController::class, 'receive'])->name('receive');
-        Route::post('/transfer', [StockController::class, 'transfer'])->name('transfer');
-        Route::post('/consume', [StockController::class, 'consume'])->name('consume');
+        // Route::get('/', [StockController::class, 'index'])->name('index');
+        // Route::post('/receive', [StockController::class, 'receive'])->name('receive');
+        // Route::post('/transfer', [StockController::class, 'transfer'])->name('transfer');
+        // Route::post('/consume', [StockController::class, 'consume'])->name('consume');
         Route::get('/export', [StockController::class, 'export'])->name('export');
-        Route::get('/materiaux/{materiau}/history', [StockController::class, 'history'])->name('history');
+        // Route::get('/materiaux/{materiau}/history', [StockController::class, 'history'])->name('history');
     });
+    Route::prefix('projets/{projet}/stocks')->name('stocks.')->group(function () {
+        // Index = liste du stock
+        Route::get('/',               [StockController::class, 'index'])       ->name('index');
+    
+        // Vues dédiées (formulaires full-page)
+        Route::get('/receptionner',   [StockController::class, 'receiveForm']) ->name('receive.form');
+        Route::post('/receptionner',  [StockController::class, 'receive'])     ->name('receive');
+    
+        Route::get('/transferer',     [StockController::class, 'transferForm'])->name('transfer.form');
+        Route::post('/transferer',    [StockController::class, 'transfer'])    ->name('transfer');
+    
+        Route::get('/consommer',      [StockController::class, 'consumeForm']) ->name('consume.form');
+        Route::post('/consommer',     [StockController::class, 'consume'])     ->name('consume');
+    
+        // Historique
+        Route::get('/historique/{materiau}', [StockController::class, 'history'])->name('history');
+    
+        // Seuil (garde-fou inline AJAX, reste si besoin)
+        Route::put('/seuil/{stock}',  [StockController::class, 'updateThreshold'])->name('threshold');
+    });
+    
+    // Catalogue matériaux (indépendant d'un projet)
+    Route::get('/materiaux/creer',    [StockController::class, 'createMaterialForm'])->name('stocks.materiau.create');
+    Route::post('/materiaux',         [StockController::class, 'createMaterial'])    ->name('stocks.materiau.store');
     Route::prefix('projets/{projet}/presences')->name('presences.')->group(function () {
         Route::get('/', [PresenceController::class, 'index'])->name('index');
         Route::post('/', [PresenceController::class, 'store'])->name('store');

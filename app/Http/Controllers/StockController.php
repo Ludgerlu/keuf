@@ -87,10 +87,10 @@ class StockController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'materiau_id' => 'required|exists:materiaux,id',
-            'quantite' => 'required|numeric|min:0.001',
+            'quantite' => 'required',
             'prix_unitaire' => 'nullable|numeric|min:0',
             'fournisseur_id' => 'nullable|exists:fournisseurs,id',
-            'fournisseur_nom' => 'required_without:fournisseur_id|string|max:255',
+            'fournisseur_nom' => 'required_without:fournisseur_id|max:255',
             'reference_doc' => 'nullable|string|max:100',
             'note' => 'nullable|string|max:500',
             'date_reception' => 'nullable|date',
@@ -118,7 +118,7 @@ class StockController extends Controller
                 'materiau_id' => $request->materiau_id,
                 'effectue_par' => Auth::id(),
                 'fournisseur_id' => $fournisseurId,
-                'type' => 'reception',
+                'type' => 'entree',
                 'dest_projet_id' => $projet->id,
                 'quantite' => $request->quantite,
                 'prix_unitaire' => $request->prix_unitaire,
@@ -133,28 +133,30 @@ class StockController extends Controller
                 'materiau_id' => $request->materiau_id,
             ]);
 
-            $stock->quantite += $request->quantite;
             if (!$stock->seuil_alerte) {
                 $stock->seuil_alerte = 10; // Default threshold
             }
+
             $stock->updated_at = now();
             $stock->save();
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Réception enregistrée avec succès.',
-                'mouvement' => $mouvement->load(['materiau', 'fournisseur']),
-                'stock' => $stock->load('materiau')
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Réception enregistrée avec succès.',
+                    'mouvement' => $mouvement->load(['materiau', 'fournisseur']),
+                    'stock' => $stock->load('materiau')
+                ]);
+            }
+            return redirect()->route('stocks.index', $projet)
+                    ->with('success', 'Réception enregistrée avec succès.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                             ->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
@@ -219,18 +221,20 @@ class StockController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Transfert effectué avec succès.',
-                'mouvement' => $mouvement->load(['materiau', 'destProjet'])
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transfert effectué avec succès.',
+                    'mouvement' => $mouvement->load(['materiau', 'destProjet'])
+                ]);
+            }
+            return redirect()->route('stocks.index', $projet)
+                    ->with('success', 'Transfert effectué avec succès.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                             ->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
@@ -281,18 +285,21 @@ class StockController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Consommation enregistrée.',
-                'mouvement' => $mouvement->load(['materiau', 'phase'])
-            ]);
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Consommation enregistrée.',
+                    'mouvement' => $mouvement->load(['materiau', 'phase'])
+                ]);
+            }
+            return redirect()->route('stocks.index', $projet)
+                    ->with('success', 'Consommation enregistrée avec succès.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                             ->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
@@ -347,38 +354,38 @@ class StockController extends Controller
     /**
      * Create new material.
      */
-    public function createMaterial(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'nom' => 'required|string|max:255|unique:materiaux,nom',
-            'unite' => 'required|string|max:50',
-            'categorie' => 'nullable|string|max:100',
-        ]);
+    // public function createMaterial(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'nom' => 'required|string|max:255|unique:materiaux,nom',
+    //         'unite' => 'required|string|max:50',
+    //         'categorie' => 'nullable|string|max:100',
+    //     ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 422);
+    //     }
 
-        try {
-            $materiau = Materiau::create([
-                'nom' => $request->nom,
-                'unite' => $request->unite,
-                'categorie' => $request->categorie,
-            ]);
+    //     try {
+    //         $materiau = Materiau::create([
+    //             'nom' => $request->nom,
+    //             'unite' => $request->unite,
+    //             'categorie' => $request->categorie,
+    //         ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Matériau créé avec succès.',
-                'materiau' => $materiau
-            ]);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Matériau créé avec succès.',
+    //             'materiau' => $materiau
+    //         ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Erreur: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     /**
      * Export stock report.
@@ -397,4 +404,128 @@ class StockController extends Controller
         // Export logic here
         return back()->with('success', 'Export en cours de génération...');
     }
+
+
+    /**
+ * Show receive form (full page).
+ */
+public function receiveForm(Request $request, Projet $projet)
+{
+    $stock      = StockProjet::where('projet_id', $projet->id)
+                    ->with('materiau')->get()->keyBy('materiau_id');
+    $materiaux  = Materiau::orderBy('nom')->get();
+    $fournisseurs = Fournisseur::orderBy('nom')->get();
+
+    return view('stocks.receive', [
+        'projet'              => $projet,
+        'stock'               => $stock,
+        'materiaux'           => $materiaux,
+        'fournisseurs'        => $fournisseurs,
+        'preselectedMateriau' => $request->query('materiau_id'),
+    ]);
+}
+
+/**
+ * Show transfer form (full page).
+ */
+public function transferForm(Request $request, Projet $projet)
+{
+    $stock = StockProjet::where('projet_id', $projet->id)
+               ->with('materiau')->get()->keyBy('materiau_id');
+
+    $activeProjects = Projet::where('id', '!=', $projet->id)
+                       ->whereIn('statut', ['debut', 'en_cours', 'verification'])
+                       ->orderBy('nom')->get();
+
+    $phases = PhaseProjet::where('projet_id', $projet->id)->orderBy('ordre')->get();
+
+    return view('stocks.transfer', [
+        'projet'              => $projet,
+        'stock'               => $stock,
+        'activeProjects'      => $activeProjects,
+        'phases'              => $phases,
+        'preselectedMateriau' => $request->query('materiau_id'),
+    ]);
+}
+
+/**
+ * Show consume form (full page).
+ */
+public function consumeForm(Request $request, Projet $projet)
+{
+    $stock  = StockProjet::where('projet_id', $projet->id)
+                ->with('materiau')->get()->keyBy('materiau_id');
+    $phases = PhaseProjet::where('projet_id', $projet->id)->orderBy('ordre')->get();
+
+    return view('stocks.consume', [
+        'projet'              => $projet,
+        'stock'               => $stock,
+        'phases'              => $phases,
+        'preselectedMateriau' => $request->query('materiau_id'),
+    ]);
+}
+
+/**
+ * Show create material form (full page).
+ */
+public function createMaterialForm(Request $request)
+{
+    $projet = null;
+    if ($request->query('projet_id')) {
+        $projet = Projet::find($request->query('projet_id'));
+    }
+    return view('stocks.create-material', compact('projet'));
+}
+
+/**
+ * Store new material (override existing method to handle redirect).
+ */
+public function createMaterial(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'nom'               => 'required|string|max:255|unique:materiaux,nom',
+        'unite'             => 'required|string|max:50',
+        'categorie'         => 'nullable|string|max:100',
+        'seuil_alerte'      => 'required|numeric|min:0',
+        'quantite_initiale' => 'nullable|numeric|min:0',
+    ]);
+
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->withInput();
+    }
+
+    DB::beginTransaction();
+    try {
+        $materiau = Materiau::create([
+            'nom'       => $request->nom,
+            'unite'     => $request->unite,
+            'categorie' => $request->categorie,
+        ]);
+
+        // If a projet_id was passed AND an initial qty, create a stock entry
+        if ($request->filled('projet_id') && $request->quantite_initiale > 0) {
+            StockProjet::create([
+                'projet_id'    => $request->projet_id,
+                'materiau_id'  => $materiau->id,
+                'quantite'     => $request->quantite_initiale,
+                'seuil_alerte' => $request->seuil_alerte,
+            ]);
+        }
+
+        DB::commit();
+
+        $redirect = $request->filled('projet_id')
+            ? route('stocks.index', $request->projet_id)
+            : route('projets.index');
+
+        return redirect($redirect)
+            ->with('success', 'Matériau "' . $materiau->nom . '" créé avec succès.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur lors de la création : ' . $e->getMessage());
+    }
+}
 }
